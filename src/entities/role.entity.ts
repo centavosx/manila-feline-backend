@@ -1,16 +1,11 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
-
-enum Roles {
-  ADMIN = 'admin',
-  DOCTOR = 'doctor',
-  USER = 'user',
-}
+import { Roles } from '../enum';
 
 @Entity()
 export class Role {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ enum: Roles })
+  @Column({ enum: Roles, unique: true })
   name: Roles;
 }

@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AppointmentModule } from './appointment/appointment.module';
-import { BaseModule } from './base/base.module';
+import { AppointmentModule, BaseModule } from './modules';
 import { Config } from './config/config';
 import {
   User,
