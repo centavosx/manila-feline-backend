@@ -2,11 +2,15 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Role, User, UserRole } from '../../../entities';
 import { DataSource, Repository } from 'typeorm';
-import { CreateUserDto } from '../dto/create-user.dto';
+
+import { LoginDto, CreateUserDto } from '../dto';
+import { ifMatched, hashPassword } from '../../../helpers/hash.helper';
+import { TokenService } from '../../../authentication/services/token.service';
 
 @Injectable()
 export class BaseService {
@@ -17,6 +21,7 @@ export class BaseService {
     private readonly userRoleRepository: Repository<UserRole>,
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
+    private readonly tokenService: TokenService,
   ) {}
 
   public async createUser(data: CreateUserDto) {
@@ -35,7 +40,12 @@ export class BaseService {
     try {
       const newUser = new User();
 
-      Object.assign(newUser, data);
+      Object.assign(newUser, {
+        ...data,
+        password: !!data.password
+          ? await hashPassword(data.password)
+          : undefined,
+      });
 
       const user = await this.userRepository.save(newUser);
 
@@ -61,5 +71,16 @@ export class BaseService {
     }
 
     return user;
+  }
+
+  public async loginUser(data: LoginDto) {
+    const user = await this.userRepository.findOne({
+      where: { email: data.email },
+    });
+
+    if (!user) throw new NotFoundException('User not found');
+    if (!(await ifMatched(data.password, user.password)))
+      throw new BadRequestException('Wrong password');
+    return await this.tokenService.generateTokens(user);
   }
 }

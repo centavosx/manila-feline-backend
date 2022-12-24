@@ -12,13 +12,13 @@ export class TokenService {
   ) {}
 
   public async createAccessToken(data: User) {
-    return jwt.sign(data, process.env.ACCESS_KEY as string, {
+    return jwt.sign({ ...data }, process.env.ACCESS_KEY as string, {
       expiresIn: '10m',
     });
   }
 
   public async createRefreshToken(data: User) {
-    return jwt.sign(data, process.env.REFRESH_KEY as string, {
+    return jwt.sign({ ...data }, process.env.REFRESH_KEY as string, {
       expiresIn: '168h',
     });
   }
@@ -72,6 +72,7 @@ export class TokenService {
   }
 
   public async generateTokens(data: User) {
+    delete data.password;
     return {
       accessToken: await this.createAccessToken(data),
       refreshToken: await this.createRefreshToken(data),

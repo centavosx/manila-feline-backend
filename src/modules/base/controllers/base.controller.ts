@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Roles } from '../../../decorators/roles.decorator';
-import { CreateUserDto } from '../dto/create-user.dto';
+import { CreateUserDto, LoginDto } from '../dto';
 import { BaseService } from '../services/base.service';
 import { Roles as RoleTypes } from '../../../enum';
 import { MailService } from '../../../mail/mail.service';
@@ -36,5 +36,10 @@ export class BaseController {
     );
 
     return await this.baseService.createUser(data);
+  }
+
+  @Post('/login')
+  public async loginUser(@Body() data: LoginDto) {
+    return await this.baseService.loginUser(data);
   }
 }
