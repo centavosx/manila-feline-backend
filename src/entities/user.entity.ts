@@ -1,6 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToMany,
+  JoinTable,
+} from 'typeorm';
 import { Exclude } from 'class-transformer';
-import { UserRole } from './user_role.entity';
+
+import { Role } from './role.entity';
 
 @Entity()
 export class User {
@@ -23,8 +30,15 @@ export class User {
   @Column({ nullable: true })
   position: string;
 
-  @OneToMany(() => UserRole, (role) => role.userId)
-  roles: UserRole[];
+  @ManyToMany(() => Role, (role) => role.users, {
+    eager: true,
+  })
+  @JoinTable({
+    name: 'user_role',
+    joinColumn: { name: 'userId' },
+    inverseJoinColumn: { name: 'roleId' },
+  })
+  roles: Role[];
 
   @Column({ default: new Date() })
   created: Date;

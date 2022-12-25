@@ -12,6 +12,7 @@ export class RefreshController {
   @Get('/refresh')
   public async refreshToken(@User() user: UserEntity | undefined) {
     if (!user) throw new UnauthorizedException('Unauthorized');
+
     return this.tokenService.generateTokens(user);
   }
 }

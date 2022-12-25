@@ -3,8 +3,8 @@ import { IsEmail, IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
 import { Roles } from '../../../enum';
 
 export class CreateUserDto {
-  @ApiProperty()
-  @IsNotEmpty()
+  @ApiPropertyOptional()
+  @IsOptional()
   name: string;
 
   @ApiProperty()

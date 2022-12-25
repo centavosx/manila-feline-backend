@@ -7,14 +7,7 @@ import {
 
 import { ConfigService, ConfigModule } from '@nestjs/config';
 import { AppointmentModule, BaseModule } from './modules';
-import {
-  User,
-  UserRole,
-  Appointment,
-  Availability,
-  Role,
-  Token,
-} from './entities';
+import { User, Appointment, Availability, Role, Token } from './entities';
 import { TokenService } from './authentication/services/token.service';
 import {
   AuthMiddleware,
