@@ -14,15 +14,12 @@ export class Availability {
   id: string;
 
   @Column()
-  userId: string;
-
-  @Column()
   startDate: Date;
 
   @Column()
   endDate: Date;
 
-  @ManyToOne(() => User, (user) => user)
-  @JoinColumn({ name: 'userId', referencedColumnName: 'id' })
+  @ManyToOne(() => User, (user) => user.availability)
+  @JoinColumn({ name: 'userId' })
   user: User;
 }

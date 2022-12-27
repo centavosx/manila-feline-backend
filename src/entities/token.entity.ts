@@ -22,7 +22,7 @@ export class Token {
   exp: Date;
 
   @ManyToOne(() => User, (user) => user)
-  @JoinColumn({ name: 'userId', referencedColumnName: 'id' })
+  @JoinColumn({ name: 'userId' })
   user: User;
 
   @Column({ default: new Date() })

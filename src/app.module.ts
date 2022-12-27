@@ -19,6 +19,7 @@ import { RolesGuard } from './guards/roles.guard';
 import { MailService } from './mail/mail.service';
 import { RefreshController } from './authentication/controller/refresh.controller';
 import { dataSourceOptions } from './config/config';
+import { ServiceModule } from './modules/service/service.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { dataSourceOptions } from './config/config';
     TypeOrmModule.forRoot(dataSourceOptions),
     AppointmentModule,
     BaseModule,
+    ServiceModule,
   ],
   controllers: [RefreshController],
   providers: [ConfigService, TokenService, RolesGuard, MailService],

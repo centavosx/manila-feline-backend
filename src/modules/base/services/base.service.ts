@@ -5,7 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Role, User } from '../../../entities';
+import { Availability, Role, Services, User } from '../../../entities';
 import { DataSource, Repository } from 'typeorm';
 
 import {
@@ -13,8 +13,9 @@ import {
   CreateUserDto,
   SearchUserDto,
   ResponseDto,
-  SearchSingle,
-  DeleteRoleDto,
+  DeleteDto,
+  IdDto,
+  TimeSetterDto,
 } from '../dto';
 import { ifMatched, hashPassword } from '../../../helpers/hash.helper';
 import { TokenService } from '../../../authentication/services/token.service';
@@ -27,6 +28,10 @@ export class BaseService {
 
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
+    @InjectRepository(Services)
+    private readonly serviceRepository: Repository<Services>,
+    @InjectRepository(Availability)
+    private readonly availabilityRepository: Repository<Availability>,
     private readonly tokenService: TokenService,
   ) {}
 
@@ -157,7 +162,7 @@ export class BaseService {
     return await this.addUser(data, role);
   }
 
-  public async removeRole(data: DeleteRoleDto, query: SearchUserDto) {
+  public async removeRole(data: DeleteDto, query: SearchUserDto) {
     const users = await this.userRepository.find({
       where: data.ids.map((d) => ({ id: d })),
     });
@@ -168,5 +173,80 @@ export class BaseService {
       }
 
     return await this.userRepository.save(users);
+  }
+
+  public async addService(id: string, data: IdDto) {
+    const user = await this.userRepository.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!user) throw new NotFoundException('User not found');
+
+    const newService = await this.serviceRepository.findOne({
+      where: {
+        id: data.id,
+      },
+    });
+
+    if (!newService) throw new NotFoundException('Service not found');
+    if (user.services.some((d) => d.id === newService.id))
+      throw new ConflictException('Service is already added in this account');
+    user.services.push(newService);
+
+    return await this.userRepository.save(user);
+  }
+
+  public async deleteService(id: string, data: IdDto) {
+    const user = await this.userRepository.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!user) throw new NotFoundException('User not found');
+
+    if (user.services.some((d) => d.id === data.id)) {
+      user.services = user.services.filter((d) => d.id !== data.id);
+      return await this.userRepository.save(user);
+    }
+    throw new ConflictException('Service is not added in this account');
+  }
+
+  public async updateAvailability(id: string, data: TimeSetterDto) {
+    const availability = await this.availabilityRepository.find({
+      where: {
+        user: {
+          id,
+        },
+      },
+      relations: ['user'],
+    });
+
+    await this.availabilityRepository.remove(availability);
+    const user = await this.userRepository.findOne({ where: { id } });
+    if (!user) throw new NotFoundException('User not found');
+
+    const availabilities: Availability[] = [];
+
+    for (const i in data.time) {
+      const index = parseInt(i);
+      for (const val of data.time[index]) {
+        const currDay = new Date();
+        const distance = (index + 7 - currDay.getDay()) % 7;
+        currDay.setDate(currDay.getDate() + distance);
+        const split = val.split(' to ');
+        const firstDate = new Date(currDay.toDateString() + ' ' + split[0]);
+        const secondDate = new Date(currDay.toDateString() + ' ' + split[1]);
+        const newAvail = new Availability();
+        newAvail.startDate = firstDate;
+        newAvail.endDate = secondDate;
+        newAvail.user = user;
+        availabilities.push(newAvail);
+      }
+    }
+
+    return await this.availabilityRepository.save(availabilities);
   }
 }
