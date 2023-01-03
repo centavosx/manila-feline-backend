@@ -4,6 +4,7 @@ import * as nodemailer from 'nodemailer';
 import * as handlebars from 'handlebars';
 import * as path from 'path';
 import * as fs from 'fs';
+import { oauth2 } from 'googleapis/build/src/apis/oauth2';
 
 @Injectable()
 export class MailService {

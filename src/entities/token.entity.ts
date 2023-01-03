@@ -4,6 +4,7 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  CreateDateColumn,
 } from 'typeorm';
 import { User } from './user.entity';
 
@@ -25,6 +26,6 @@ export class Token {
   @JoinColumn({ name: 'userId' })
   user: User;
 
-  @Column({ default: new Date() })
+  @CreateDateColumn()
   created: Date;
 }

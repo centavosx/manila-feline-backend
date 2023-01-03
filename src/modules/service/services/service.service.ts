@@ -30,8 +30,8 @@ export class ServiceService {
 
   public async getAll(query: SearchServiceDto): Promise<ResponseDto> {
     const data = await this.serviceRepository.find({
-      skip: (query.page ?? 0) * (query.limit ?? 20),
-      take: query.limit ?? 20,
+      skip: (query.page ?? 0) * (query.limit ?? 50),
+      take: query.limit ?? 50,
     });
 
     const total = await this.serviceRepository.count();

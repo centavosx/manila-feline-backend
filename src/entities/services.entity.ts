@@ -5,6 +5,8 @@ import {
   Column,
   ManyToMany,
   OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Appointment } from './appointment.entity';
 import { User } from './user.entity';
@@ -20,10 +22,10 @@ export class Services {
   @Column({ nullable: true })
   description: string;
 
-  @Column({ default: new Date() })
+  @CreateDateColumn()
   created: Date;
 
-  @Column({ default: new Date() })
+  @UpdateDateColumn()
   modified: Date;
 
   @ApiProperty({ type: User, isArray: true, nullable: true })
@@ -34,6 +36,6 @@ export class Services {
   public users: User[];
 
   @ApiProperty({ type: Appointment, isArray: true, nullable: true })
-  @OneToMany(() => Appointment, (appointment) => appointment.service)
+  @ManyToMany(() => Appointment, (appointment) => appointment.service)
   public appointment: Appointment[];
 }

@@ -13,6 +13,9 @@ function configureSwagger(app: INestApplication): void {
 }
 
 async function bootstrap() {
+  const env = process.env.NODE_ENV || 'development';
+  const isDevelopment = env === 'development';
+
   const app = await NestFactory.create(AppModule);
   const moduleRef = app.select(AppModule);
   const reflector = moduleRef.get(Reflector);
@@ -22,7 +25,7 @@ async function bootstrap() {
   app.enableCors();
   app.useGlobalGuards(rolesGuard);
   app.useGlobalPipes(new ValidationPipe());
-  configureSwagger(app);
+  if (isDevelopment) configureSwagger(app);
   await app.init();
   await app.listen(3002);
 }

@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -5,48 +6,76 @@ import {
   ManyToOne,
   JoinColumn,
   ManyToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Services } from './services.entity';
 import { User } from './user.entity';
+
+export enum Status {
+  pending = 'Pending',
+  accepted = 'Accepted',
+  completed = 'Completed',
+  cancelled = 'Cancelled',
+}
+
+export enum AmOrPm {
+  AM = 'AM',
+  PM = 'PM',
+}
 
 @Entity()
 export class Appointment {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true })
+  @Column({
+    unique: true,
+  })
   refId: string;
 
   @Column()
-  startDate: Date;
+  name: string;
 
   @Column()
+  email: string;
+
+  @Column()
+  message: string;
+
+  @Column({ nullable: true })
+  startDate: Date;
+
+  @Column({ nullable: true })
   endDate: Date;
+
+  @Column({ default: Status.pending })
+  status: Status;
+
+  @Column()
+  time: AmOrPm;
+
+  @Column({ nullable: true })
+  verification: string;
 
   @ManyToOne(() => Services, (service) => service.appointment, {
     cascade: true,
     onDelete: 'SET NULL',
   })
-  @JoinColumn({ name: 'serviceId' })
+  @JoinColumn({ name: 'serviceId', referencedColumnName: 'id' })
   service: Services;
 
-  @ManyToOne(() => User, (user) => user, {
+  @ApiProperty({ type: User })
+  @ManyToOne(() => User, (user) => user.appointment, {
     cascade: true,
     onDelete: 'SET NULL',
   })
-  @JoinColumn({ name: 'userId', referencedColumnName: 'id' })
-  user: User;
-
-  @ManyToOne(() => User, (user) => user, {
-    cascade: true,
-    onDelete: 'SET NULL',
-  })
-  @JoinColumn({ name: 'doctorId', referencedColumnName: 'id' })
+  @JoinColumn({ name: 'doctorId' })
   doctor: User;
 
-  @Column({ default: new Date() })
+  @CreateDateColumn()
   created: Date;
 
-  @Column({ default: new Date() })
+  @UpdateDateColumn()
   modified: Date;
 }

@@ -19,6 +19,7 @@ import {
 } from '../dto';
 import { ifMatched, hashPassword } from '../../../helpers/hash.helper';
 import { TokenService } from '../../../authentication/services/token.service';
+import { Roles } from 'src/enum';
 
 @Injectable()
 export class BaseService {
@@ -130,7 +131,13 @@ export class BaseService {
 
   public async loginUser(data: LoginDto) {
     const user = await this.userRepository.findOne({
-      where: { email: data.email },
+      where: {
+        email: data.email,
+        roles: {
+          name: Roles.ADMIN,
+        },
+      },
+      relations: ['roles'],
     });
 
     if (!user) throw new NotFoundException('User not found');

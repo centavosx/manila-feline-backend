@@ -28,7 +28,6 @@ import { DeleteDto } from 'src/modules/base/dto';
 export class ServiceController {
   constructor(private readonly serviceService: ServiceService) {}
 
-  @Roles(RoleTypes.ADMIN)
   @Get()
   public async getAll(@Query() queryParameters: SearchServiceDto) {
     return await this.serviceService.getAll(queryParameters);

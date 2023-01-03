@@ -20,14 +20,16 @@ import { MailService } from './mail/mail.service';
 import { RefreshController } from './authentication/controller/refresh.controller';
 import { dataSourceOptions } from './config/config';
 import { ServiceModule } from './modules/service/service.module';
+import { OtherModule } from './modules/other/other.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ envFilePath: '.env' }),
+    ConfigModule.forRoot(),
     TypeOrmModule.forRoot(dataSourceOptions),
     AppointmentModule,
     BaseModule,
     ServiceModule,
+    OtherModule,
   ],
   controllers: [RefreshController],
   providers: [ConfigService, TokenService, RolesGuard, MailService],

@@ -54,18 +54,8 @@ export class BaseController {
     return await this.baseService.getUser(userId);
   }
 
-  @Roles(RoleTypes.ADMIN)
   @Post()
   public async createUser(@Body() data: CreateUserDto) {
-    // await this.mailService.sendMail(
-    //   'sseethpan098123@gmail.com',
-    //   'TEST',
-    //   'email',
-    //   {
-    //     name: 'test',
-    //   },
-    // );
-
     return await this.baseService.createUser(data);
   }
 

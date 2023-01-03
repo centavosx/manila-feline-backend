@@ -4,8 +4,9 @@ import {
   Column,
   ManyToMany,
   JoinTable,
-  JoinColumn,
   OneToMany,
+  UpdateDateColumn,
+  CreateDateColumn,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 
@@ -13,7 +14,6 @@ import { Role } from './role.entity';
 import { Availability } from './availability.entity';
 import { Services } from './services.entity';
 import { Appointment } from './appointment.entity';
-import { Token } from './token.entity';
 
 @Entity()
 export class User {
@@ -66,9 +66,13 @@ export class User {
   })
   availability: Availability[];
 
-  @Column({ default: new Date() })
+  @Exclude()
+  @OneToMany(() => Appointment, (appointment) => appointment.doctor)
+  appointment: Appointment[];
+
+  @CreateDateColumn()
   created: Date;
 
-  @Column({ default: new Date() })
+  @UpdateDateColumn()
   modified: Date;
 }
