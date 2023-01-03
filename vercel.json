@@ -1,4 +1,7 @@
 {
+  "framework": "nestjs",
+  "installCommand": "npm install",
+  "buildCommand": "nest build",
   "builds": [
     {
       "src": "./dist/main.js",
