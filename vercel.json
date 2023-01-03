@@ -1,5 +1,4 @@
 {
-  "framework": "nestjs",
   "installCommand": "npm install",
   "buildCommand": "npm run lint && nest build",
   "builds": [
