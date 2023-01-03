@@ -1,11 +1,10 @@
 {
-  "installCommand": "npm install",
-  "buildCommand": "npm run lint && nest build",
-  "builds": [
+  "builds": [{ "src": "src/main.ts", "use": "@vercel/node" }],
+  "routes": [
     {
-      "src": "./dist/main.js",
-      "use": "@vercel/node"
+      "src": "/(.*)",
+      "dest": "src/main.ts",
+      "methods": ["GET", "POST", "PUT", "PATCH", "DELETE"]
     }
-  ],
-  "routes": [{ "src": "/(.*)", "dest": "/" }]
+  ]
 }
