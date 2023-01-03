@@ -1,7 +1,7 @@
 {
   "framework": "nestjs",
   "installCommand": "npm install",
-  "buildCommand": "nest build",
+  "buildCommand": "npm run lint && nest build",
   "builds": [
     {
       "src": "./dist/main.js",
