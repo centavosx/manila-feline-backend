@@ -20,7 +20,6 @@ import {
   SearchDoctorDto,
   CreateAppointmentDto,
   VerifyAppointmentDto,
-  SearchAppointmentDto,
 } from '../dto';
 import { OtherService } from '../services/other.service';
 import { Roles as RoleTypes } from '../../../enum';
@@ -46,12 +45,6 @@ export class OtherController {
   @Get('mail')
   public async getAllMessage(@Query() data: SearchUserDto) {
     return await this.otherService.getAll(data);
-  }
-
-  @Roles(RoleTypes.ADMIN)
-  @Get('appointments')
-  public async getAllAppointments(@Query() data: SearchAppointmentDto) {
-    return await this.otherService.getAppointments(data);
   }
 
   @Roles(RoleTypes.ADMIN)

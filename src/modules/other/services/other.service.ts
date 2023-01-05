@@ -28,7 +28,6 @@ import {
   CreateAppointmentDto,
   CreateEmailDto,
   ReplyMailDto,
-  SearchAppointmentDto,
   SearchDoctorDto,
   VerifyAppointmentDto,
 } from '../dto';
@@ -309,42 +308,5 @@ export class OtherService {
     delete savedData.verification;
 
     return savedData;
-  }
-
-  public async getAppointments(
-    data: SearchAppointmentDto,
-  ): Promise<ResponseDto> {
-    const appointment = await this.appointmentRepository.find({
-      where: {
-        status: data.status,
-        time: data.time,
-        verification: IsNull(),
-      },
-      order: {
-        created: 'DESC',
-      },
-      skip: (data.page ?? 0) * (data.limit ?? 20),
-      take: data.limit ?? 20,
-      relations: ['service'],
-    });
-
-    const total = await this.appointmentRepository.count({
-      where: {
-        status: data.status,
-        time: data.time,
-        verification: IsNull(),
-      },
-      order: {
-        created: 'DESC',
-      },
-      skip: (data.page ?? 0) * (data.limit ?? 20),
-      take: data.limit ?? 20,
-      relations: ['service'],
-    });
-
-    return {
-      data: appointment,
-      total,
-    };
   }
 }

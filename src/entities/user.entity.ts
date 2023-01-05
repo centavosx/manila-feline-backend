@@ -70,6 +70,9 @@ export class User {
   @OneToMany(() => Appointment, (appointment) => appointment.doctor)
   appointment: Appointment[];
 
+  public hasAm?: boolean;
+  public hasPm?: boolean;
+
   @CreateDateColumn()
   created: Date;
 
