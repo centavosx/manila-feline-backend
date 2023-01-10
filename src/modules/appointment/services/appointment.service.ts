@@ -177,7 +177,7 @@ export class AppointmentService {
       'Your appointment status has been updated',
       'appointment',
       {
-        refId: updated.id,
+        refId: updated.refId,
         name: updated.name,
         status: updated.status,
         time:
