@@ -56,10 +56,6 @@ export class ServiceService {
   }
 
   public async deleteServices(data: DeleteDto) {
-    const dataToDelete = await this.serviceRepository.find({
-      where: data.ids?.map((d) => ({ id: d })),
-    });
-
-    return await this.serviceRepository.remove(dataToDelete);
+    return await this.serviceRepository.delete(data.ids);
   }
 }
