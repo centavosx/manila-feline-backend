@@ -44,6 +44,9 @@ export class Appointment {
   message: string;
 
   @Column({ nullable: true })
+  date: Date;
+
+  @Column({ nullable: true })
   startDate: Date;
 
   @Column({ nullable: true })
@@ -65,13 +68,14 @@ export class Appointment {
   @JoinColumn({ name: 'serviceId', referencedColumnName: 'id' })
   service: Services;
 
-  @ApiProperty({ type: User })
+  @ApiProperty({ type: User, nullable: true })
   @ManyToOne(() => User, (user) => user.appointment, {
     cascade: true,
     onDelete: 'SET NULL',
+    nullable: true,
   })
   @JoinColumn({ name: 'doctorId' })
-  doctor: User;
+  doctor?: User;
 
   @CreateDateColumn()
   created: Date;

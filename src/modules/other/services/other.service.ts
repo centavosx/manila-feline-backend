@@ -185,11 +185,20 @@ export class OtherService {
       relations: ['roles'],
     });
 
-    const thisDate = new Date(new Date(date).toDateString());
-    const nextDate = new Date(thisDate);
-    nextDate.setDate(nextDate.getDate() + 1);
-
     if (!doctor) throw new NotFoundException('Doctor not found');
+
+    doctor.hasAm = !!doctor.availability.some(
+      (d) =>
+        new Date(date).getDay() === d.startDate.getDay() &&
+        (d.startDate.getHours() < 12 || d.endDate.getHours() < 12),
+    );
+
+    doctor.hasPm = !!doctor.availability.some(
+      (d) =>
+        new Date(date).getDay() === d.startDate.getDay() &&
+        (d.startDate.getHours() >= 12 || d.endDate.getHours() >= 12),
+    );
+
     return doctor;
   }
 
@@ -230,6 +239,7 @@ export class OtherService {
     newAppointment.message = data.message;
     newAppointment.name = data.name;
     newAppointment.time = data.time;
+    newAppointment.date = new Date(data.date);
     newAppointment.refId = (
       new Date().getTime().toString(36) + Math.random().toString(36).slice(8)
     ).toUpperCase();

@@ -1,35 +1,22 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Appointment, Services, Status, User } from '../../../entities';
 import {
-  Appointment,
-  Availability,
-  ContactUs,
-  Replies,
-  Role,
-  Services,
-  User,
-} from '../../../entities';
-import {
-  Brackets,
   DataSource,
   IsNull,
   LessThanOrEqual,
   MoreThanOrEqual,
-  Not,
   Repository,
+  And,
 } from 'typeorm';
 
 import { SearchAppointmentDto, UpdateAppointmentDto } from '../dto';
-import { ifMatched, hashPassword } from '../../../helpers/hash.helper';
-import { TokenService } from '../../../authentication/services/token.service';
+
 import { MailService } from 'src/mail/mail.service';
-import { DeleteDto, ResponseDto, SearchUserDto } from 'src/modules/base/dto';
+import { ResponseDto } from 'src/modules/base/dto';
 import { Roles } from 'src/enum';
+import { CreateAppointmentDto } from 'src/modules/other/dto';
+import { format } from 'date-fns';
 
 @Injectable()
 export class AppointmentService {
@@ -47,18 +34,28 @@ export class AppointmentService {
   public async getAppointments(
     data: SearchAppointmentDto,
   ): Promise<ResponseDto> {
+    const greaterDate = data.startDate,
+      lessDate = data.endDate;
+
     const appointment = await this.appointmentRepository.find({
       where: {
         status: data.status,
         time: data.time,
         verification: IsNull(),
+        date:
+          !!greaterDate && !!lessDate
+            ? And(
+                LessThanOrEqual(new Date(lessDate)),
+                MoreThanOrEqual(new Date(greaterDate)),
+              )
+            : undefined,
       },
       order: {
         created: 'DESC',
       },
       skip: (data.page ?? 0) * (data.limit ?? 20),
       take: data.limit ?? 20,
-      relations: ['service'],
+      relations: ['service', 'doctor'],
     });
 
     const total = await this.appointmentRepository.count({
@@ -66,13 +63,20 @@ export class AppointmentService {
         status: data.status,
         time: data.time,
         verification: IsNull(),
+        date:
+          !!greaterDate && !!lessDate
+            ? And(
+                LessThanOrEqual(new Date(lessDate)),
+                MoreThanOrEqual(new Date(greaterDate)),
+              )
+            : undefined,
       },
       order: {
         created: 'DESC',
       },
       skip: (data.page ?? 0) * (data.limit ?? 20),
       take: data.limit ?? 20,
-      relations: ['service'],
+      relations: ['service', 'doctor'],
     });
 
     return {
@@ -86,22 +90,27 @@ export class AppointmentService {
       where: {
         id,
       },
-      relations: [
-        'service',
-        'doctor',
-        'doctor.services',
-        'doctor.availability',
-      ],
+      relations: ['service', 'doctor'],
     });
 
-    if (!appointment) throw new NotFoundException('Appointment not found');
-    appointment.doctor.hasAm = !!appointment.doctor.availability.some(
-      (d) => d.startDate.getHours() < 12 || d.endDate.getHours() < 12,
-    );
+    if (!appointment) {
+      throw new NotFoundException('Appointment not found');
+    }
+    appointment.doctor = !!appointment.doctor
+      ? await this.userRepository.findOne({
+          where: { id: appointment.doctor?.id },
+          relations: ['services', 'availability'],
+        })
+      : null;
+    if (!!appointment.doctor) {
+      appointment.doctor.hasAm = !!appointment.doctor.availability.some(
+        (d) => d.startDate.getHours() < 12 || d.endDate.getHours() < 12,
+      );
 
-    appointment.doctor.hasPm = !!appointment.doctor.availability.some(
-      (d) => d.startDate.getHours() >= 12 || d.endDate.getHours() >= 12,
-    );
+      appointment.doctor.hasPm = !!appointment.doctor.availability.some(
+        (d) => d.startDate.getHours() >= 12 || d.endDate.getHours() >= 12,
+      );
+    }
     return appointment;
   }
 
@@ -118,6 +127,7 @@ export class AppointmentService {
   public async updateAppointment(id: string, data: UpdateAppointmentDto) {
     const appointment = await this.appointmentRepository.findOne({
       where: { id },
+      relations: ['doctor'],
     });
 
     if (!appointment) throw new NotFoundException('Appointment not found');
@@ -159,6 +169,68 @@ export class AppointmentService {
       : appointment.endDate;
     appointment.time = data.time;
     appointment.status = data.status;
+
+    const updated = await this.appointmentRepository.save(appointment);
+
+    await this.mailService.sendMail(
+      updated.email,
+      'Your appointment status has been updated',
+      'appointment',
+      {
+        refId: updated.id,
+        name: updated.name,
+        status: updated.status,
+        time:
+          !!updated.startDate && !!updated.endDate
+            ? 'Time: ' +
+              format(
+                new Date(updated?.startDate ?? 0),
+                'EEEE, LLLL do yyyy  hh:mm a',
+              ) +
+              ' to ' +
+              format(
+                new Date(updated?.endDate ?? 0),
+                'EEEE, LLLL do yyyy  hh:mm a',
+              )
+            : '',
+        doctor: !!appointment.doctor
+          ? 'Doctor: Dr ' + appointment.doctor.name
+          : '',
+        service: updated.service.name,
+      },
+    );
+
+    return updated;
+  }
+
+  public async newAppointment(data: CreateAppointmentDto) {
+    const appointment = new Appointment();
+    const service = await this.serviceRepository.findOne({
+      where: { id: data.serviceId },
+    });
+
+    if (!service) throw new NotFoundException('Service not found');
+
+    appointment.date = data.date;
+    appointment.status = Status.pending;
+    appointment.service = service;
+    appointment.email = data.email;
+    appointment.name = data.name;
+    appointment.time = data.time;
+    appointment.refId = (
+      new Date().getTime().toString(36) + Math.random().toString(36).slice(8)
+    ).toUpperCase();
+    appointment.message = data.message ?? '';
+
+    await this.mailService.sendMail(
+      appointment.email,
+      'Your booking is now verified',
+      'verified',
+      {
+        name: appointment.name,
+        code: appointment.refId,
+      },
+    );
 
     return await this.appointmentRepository.save(appointment);
   }

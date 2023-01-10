@@ -1,5 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
+  IsDate,
   IsEmail,
   IsEnum,
   IsNotEmpty,
@@ -26,6 +28,11 @@ export class CreateAppointmentDto {
   @IsNotEmpty()
   @IsString()
   name: string;
+
+  @ApiProperty()
+  @IsDate()
+  @Type(() => Date)
+  date: Date;
 
   @ApiProperty()
   @IsNotEmpty()

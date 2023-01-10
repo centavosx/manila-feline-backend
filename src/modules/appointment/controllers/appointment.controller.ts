@@ -25,6 +25,7 @@ import {
   SearchAppointmentDto,
   UpdateAppointmentDto,
 } from '../dto';
+import { CreateAppointmentDto } from 'src/modules/other/dto';
 
 @ApiTags('appointments')
 @Controller('appointments')
@@ -35,6 +36,12 @@ export class AppointmentController {
   @Get()
   public async getAllAppointments(@Query() data: SearchAppointmentDto) {
     return await this.appointmentService.getAppointments(data);
+  }
+
+  @Roles(RoleTypes.ADMIN)
+  @Post()
+  public async postNewAppointment(@Body() data: CreateAppointmentDto) {
+    return await this.appointmentService.newAppointment(data);
   }
 
   @Roles(RoleTypes.ADMIN)

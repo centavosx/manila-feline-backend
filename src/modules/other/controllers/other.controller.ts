@@ -10,7 +10,6 @@ import {
   Put,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { ParseUUIDPipe } from '@nestjs/common/pipes';
 import { Param } from '@nestjs/common/decorators';
 import { Roles } from '../../../decorators/roles.decorator';
 import {

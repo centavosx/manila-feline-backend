@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsString, IsEnum, IsOptional, IsInt } from 'class-validator';
 import { AmOrPm, Status } from 'src/entities';
 import { Roles } from '../../../enum';
@@ -38,4 +38,14 @@ export class SearchAppointmentDto {
   @IsString()
   @IsEnum(AmOrPm)
   time?: AmOrPm;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Date)
+  startDate?: Date;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Date)
+  endDate?: Date;
 }

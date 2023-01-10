@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Availability, Role, Services, User } from '../../../entities';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, Repository, ILike } from 'typeorm';
 
 import {
   LoginDto,
@@ -39,6 +39,12 @@ export class BaseService {
   public async getAll(query: SearchUserDto): Promise<ResponseDto> {
     const data = await this.userRepository.find({
       where: {
+        name: !!query.search ? ILike('%' + query.search + '%') : undefined,
+        services: !!query.serviceId
+          ? {
+              id: query.serviceId,
+            }
+          : undefined,
         roles: !!query.role
           ? {
               name: query.role,
@@ -47,11 +53,17 @@ export class BaseService {
       },
       skip: (query.page ?? 0) * (query.limit ?? 20),
       take: query.limit ?? 20,
-      relations: ['roles'],
+      relations: ['roles', 'services'],
     });
 
     const total = await this.userRepository.count({
       where: {
+        name: !!query.search ? ILike('%' + query.search + '%') : undefined,
+        services: !!query.serviceId
+          ? {
+              id: query.serviceId,
+            }
+          : undefined,
         roles: !!query.role
           ? {
               name: query.role,
@@ -59,7 +71,7 @@ export class BaseService {
           : undefined,
       },
 
-      relations: ['roles'],
+      relations: ['roles', 'services'],
     });
     return {
       data,
