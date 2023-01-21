@@ -262,11 +262,19 @@ export class BaseService {
         const currDay = new Date();
         const distance = (index + 7 - currDay.getDay()) % 7;
         currDay.setDate(currDay.getDate() + distance);
+
+        console.log(
+          val.startDate,
+          val.endDate,
+          new Date(val.startDate).toLocaleTimeString(),
+        );
+
         const firstDate = new Date(
           currDay.toDateString() +
             ' ' +
             new Date(val.startDate).toLocaleTimeString(),
         );
+
         const secondDate = new Date(
           currDay.toDateString() +
             ' ' +
