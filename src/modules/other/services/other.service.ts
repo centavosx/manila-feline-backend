@@ -161,13 +161,13 @@ export class OtherService {
 
     if (!!data.time) {
       const whereCondition = new Brackets((sub) => {
-        const query = `TO_CHAR(availability.startDate + interval :timeBetween, 'hh12:mi AM') LIKE :time OR TO_CHAR(availability.endDate + interval :timeBetween, 'hh12:mi AM') LIKE :time`;
+        const query = `TO_CHAR(availability.startDate + interval '${
+          typeof data.hoursBetweenUtc !== undefined ? data.hoursBetweenUtc : 8
+        } hours', 'hh12:mi AM') LIKE :time OR TO_CHAR(availability.endDate + interval '${
+          typeof data.hoursBetweenUtc !== undefined ? data.hoursBetweenUtc : 8
+        } hours', 'hh12:mi AM') LIKE :time`;
         return sub.where(query, {
           time: `%${data.time}%`,
-          timeBetween:
-            (typeof data.hoursBetweenUtc !== undefined
-              ? data.hoursBetweenUtc
-              : 8) + ' hours',
         });
       });
 
@@ -189,7 +189,11 @@ export class OtherService {
 
     if (!!data.day) {
       const whereCondition = new Brackets((sub) => {
-        const query = `to_char(availability.startDate, 'day') LIKE :day OR to_char(availability.endDate, 'day') LIKE :day`;
+        const query = `to_char(availability.startDate + interval '${
+          typeof data.hoursBetweenUtc !== undefined ? data.hoursBetweenUtc : 8
+        } hours', 'day') LIKE :day OR to_char(availability.endDate + interval '${
+          typeof data.hoursBetweenUtc !== undefined ? data.hoursBetweenUtc : 8
+        } hours', 'day') LIKE :day`;
         return sub.where(query, {
           day: `%${data.day}%`,
         });
