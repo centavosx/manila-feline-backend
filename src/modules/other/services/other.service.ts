@@ -167,7 +167,7 @@ export class OtherService {
           timeBetween:
             (typeof data.hoursBetweenUtc !== undefined
               ? data.hoursBetweenUtc
-              : 0) + ' hours',
+              : 8) + ' hours',
         });
       });
 
@@ -229,7 +229,7 @@ export class OtherService {
     });
 
     const timeBetween =
-      typeof hoursBetweenUtc !== undefined ? Number(hoursBetweenUtc) : 0;
+      typeof hoursBetweenUtc !== undefined ? Number(hoursBetweenUtc) : 8;
 
     if (!doctor) throw new NotFoundException('Doctor not found');
 

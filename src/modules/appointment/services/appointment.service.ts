@@ -111,6 +111,8 @@ export class AppointmentService {
       relations: ['service', 'doctor'],
     });
 
+    const timeBetween = 8;
+
     if (!appointment) {
       throw new NotFoundException('Appointment not found');
     }
@@ -121,13 +123,25 @@ export class AppointmentService {
         })
       : null;
     if (!!appointment.doctor) {
-      appointment.doctor.hasAm = !!appointment.doctor.availability.some(
-        (d) => d.startDate.getHours() < 12 || d.endDate.getHours() < 12,
-      );
+      appointment.doctor.hasAm = !!appointment.doctor.availability.some((d) => {
+        const startDate = d.startDate;
+        const endDate = d.endDate;
 
-      appointment.doctor.hasPm = !!appointment.doctor.availability.some(
-        (d) => d.startDate.getHours() >= 12 || d.endDate.getHours() >= 12,
-      );
+        startDate.setHours(startDate.getHours() + timeBetween);
+        endDate.setHours(endDate.getHours() + timeBetween);
+
+        return startDate.getHours() < 12 || endDate.getHours() < 12;
+      });
+
+      appointment.doctor.hasPm = !!appointment.doctor.availability.some((d) => {
+        const startDate = d.startDate;
+        const endDate = d.endDate;
+
+        startDate.setHours(startDate.getHours() + timeBetween);
+        endDate.setHours(endDate.getHours() + timeBetween);
+
+        return startDate.getHours() >= 12 || endDate.getHours() >= 12;
+      });
     }
     return appointment;
   }
