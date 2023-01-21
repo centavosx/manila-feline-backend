@@ -296,13 +296,27 @@ export class BaseService {
         const firstDate = new Date(currDate + ' ' + startTime);
         const secondDate = new Date(currDate + ' ' + endTime);
 
-        firstDate.setHours(firstDate.getHours() - firstDate.getUTCHours());
-        secondDate.setHours(secondDate.getHours() - secondDate.getUTCHours());
+        const firstUTCDate = new Date(
+          firstDate.getUTCFullYear(),
+          firstDate.getUTCMonth(),
+          firstDate.getUTCDate(),
+          firstDate.getUTCHours(),
+          firstDate.getUTCMinutes(),
+          firstDate.getUTCSeconds(),
+        );
+        const secondUTCDate = new Date(
+          secondDate.getUTCFullYear(),
+          secondDate.getUTCMonth(),
+          secondDate.getUTCDate(),
+          secondDate.getUTCHours(),
+          secondDate.getUTCMinutes(),
+          secondDate.getUTCSeconds(),
+        );
 
         const newAvail = new Availability();
 
-        newAvail.startDate = firstDate;
-        newAvail.endDate = secondDate;
+        newAvail.startDate = firstUTCDate;
+        newAvail.endDate = secondUTCDate;
         newAvail.user = user;
         availabilities.push(newAvail);
       }
