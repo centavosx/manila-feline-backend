@@ -226,11 +226,16 @@ export class OtherService {
 
     if (!doctor) throw new NotFoundException('Doctor not found');
 
-    doctor.hasAm = !!doctor.availability.some(
-      (d) =>
+    doctor.hasAm = !!doctor.availability.some((d) => {
+      console.log(
+        new Date(date).toDateString(),
+        new Date(d.startDate).toDateString(),
+      );
+      return (
         new Date(date).getDay() === d.startDate.getDay() &&
-        (d.startDate.getHours() < 12 || d.endDate.getHours() < 12),
-    );
+        (d.startDate.getHours() < 12 || d.endDate.getHours() < 12)
+      );
+    });
 
     doctor.hasPm = !!doctor.availability.some(
       (d) =>

@@ -18,8 +18,6 @@ import {
   TimeSetterDto,
 } from '../dto';
 
-import { format } from 'date-fns';
-
 import { ifMatched, hashPassword } from '../../../helpers/hash.helper';
 import { TokenService } from '../../../authentication/services/token.service';
 import { Roles } from 'src/enum';
