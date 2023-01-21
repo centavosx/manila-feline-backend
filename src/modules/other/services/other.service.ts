@@ -241,8 +241,8 @@ export class OtherService {
     currDate.setHours(currDate.getHours() + timeBetween);
 
     doctor.hasAm = !!doctor.availability.some((d) => {
-      const startDate = d.startDate;
-      const endDate = d.endDate;
+      const startDate = new Date(d.startDate);
+      const endDate = new Date(d.endDate);
 
       startDate.setHours(startDate.getHours() + timeBetween);
       endDate.setHours(endDate.getHours() + timeBetween);
@@ -254,8 +254,8 @@ export class OtherService {
     });
 
     doctor.hasPm = !!doctor.availability.some((d) => {
-      const startDate = d.startDate;
-      const endDate = d.endDate;
+      const startDate = new Date(d.startDate);
+      const endDate = new Date(d.endDate);
 
       startDate.setHours(startDate.getHours() + timeBetween);
       endDate.setHours(endDate.getHours() + timeBetween);

@@ -124,8 +124,8 @@ export class AppointmentService {
       : null;
     if (!!appointment.doctor) {
       appointment.doctor.hasAm = !!appointment.doctor.availability.some((d) => {
-        const startDate = d.startDate;
-        const endDate = d.endDate;
+        const startDate = new Date(d.startDate);
+        const endDate = new Date(d.endDate);
 
         startDate.setHours(startDate.getHours() + timeBetween);
         endDate.setHours(endDate.getHours() + timeBetween);
@@ -134,8 +134,8 @@ export class AppointmentService {
       });
 
       appointment.doctor.hasPm = !!appointment.doctor.availability.some((d) => {
-        const startDate = d.startDate;
-        const endDate = d.endDate;
+        const startDate = new Date(d.startDate);
+        const endDate = new Date(d.endDate);
 
         startDate.setHours(startDate.getHours() + timeBetween);
         endDate.setHours(endDate.getHours() + timeBetween);
