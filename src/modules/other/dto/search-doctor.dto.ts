@@ -2,13 +2,11 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
   IsDate,
-  IsEmail,
   IsEnum,
   IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
-  IsUUID,
 } from 'class-validator';
 
 enum AmOrPm {
@@ -66,6 +64,11 @@ export class SearchDoctorDto {
   @IsEnum(Days)
   @IsString()
   day?: Days;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  hoursBetweenUtc?: number;
 }
 
 export class DateDto {
@@ -73,4 +76,9 @@ export class DateDto {
   @IsDate()
   @Type(() => Date)
   date: Date;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  hoursBetweenUtc?: number;
 }

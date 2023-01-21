@@ -83,7 +83,11 @@ export class OtherController {
     @Query()
     data: DateDto,
   ) {
-    return await this.otherService.getDoctorInfo(id, data.date);
+    return await this.otherService.getDoctorInfo(
+      id,
+      data.date,
+      data.hoursBetweenUtc,
+    );
   }
 
   @Post('doctor/' + Parameter.id() + '/set-an-appoinment')

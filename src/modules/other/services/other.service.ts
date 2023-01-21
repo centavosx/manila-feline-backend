@@ -161,9 +161,13 @@ export class OtherService {
 
     if (!!data.time) {
       const whereCondition = new Brackets((sub) => {
-        const query = `TO_CHAR(availability.startDate, 'hh12:mi AM') LIKE :time OR TO_CHAR(availability.endDate, 'hh12:mi AM') LIKE :time`;
+        const query = `TO_CHAR(availability.startDate + interval :timeBetween, 'hh12:mi AM') LIKE :time OR TO_CHAR(availability.endDate + interval :timeBetween, 'hh12:mi AM') LIKE :time`;
         return sub.where(query, {
           time: `%${data.time}%`,
+          timeBetween:
+            (typeof data.hoursBetweenUtc !== undefined
+              ? data.hoursBetweenUtc
+              : 0) + ' hours',
         });
       });
 
@@ -218,32 +222,45 @@ export class OtherService {
     };
   }
 
-  public async getDoctorInfo(id: string, date: Date) {
+  public async getDoctorInfo(id: string, date: Date, hoursBetweenUtc?: number) {
     const doctor = await this.userRepository.findOne({
       where: { id, roles: { name: Roles.DOCTOR } },
       relations: ['roles'],
     });
 
+    const timeBetween =
+      typeof hoursBetweenUtc !== undefined ? Number(hoursBetweenUtc) : 0;
+
     if (!doctor) throw new NotFoundException('Doctor not found');
 
+    const currDate = new Date(date);
+    currDate.setHours(currDate.getHours() + timeBetween);
+
     doctor.hasAm = !!doctor.availability.some((d) => {
-      console.log(
-        new Date(date).toDateString(),
-        new Date(d.startDate).toDateString(),
-        date,
-        d.startDate,
-      );
+      const startDate = d.startDate;
+      const endDate = d.endDate;
+
+      startDate.setHours(startDate.getHours() + timeBetween);
+      endDate.setHours(endDate.getHours() + timeBetween);
+
       return (
-        new Date(date).getDay() === d.startDate.getDay() &&
-        (d.startDate.getHours() < 12 || d.endDate.getHours() < 12)
+        currDate.getDay() === startDate.getDay() &&
+        (startDate.getHours() < 12 || endDate.getHours() < 12)
       );
     });
 
-    doctor.hasPm = !!doctor.availability.some(
-      (d) =>
-        new Date(date).getDay() === d.startDate.getDay() &&
-        (d.startDate.getHours() >= 12 || d.endDate.getHours() >= 12),
-    );
+    doctor.hasPm = !!doctor.availability.some((d) => {
+      const startDate = d.startDate;
+      const endDate = d.endDate;
+
+      startDate.setHours(startDate.getHours() + timeBetween);
+      endDate.setHours(endDate.getHours() + timeBetween);
+
+      return (
+        currDate.getDay() === startDate.getDay() &&
+        (startDate.getHours() >= 12 || endDate.getHours() >= 12)
+      );
+    });
 
     return doctor;
   }
