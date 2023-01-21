@@ -17,9 +17,16 @@ import {
   IdDto,
   TimeSetterDto,
 } from '../dto';
+
+import { format } from 'date-fns';
+
 import { ifMatched, hashPassword } from '../../../helpers/hash.helper';
 import { TokenService } from '../../../authentication/services/token.service';
 import { Roles } from 'src/enum';
+
+function pad(d: number) {
+  return d < 10 ? '0' + d.toString() : d.toString();
+}
 
 @Injectable()
 export class BaseService {
@@ -263,27 +270,34 @@ export class BaseService {
         const distance = (index + 7 - currDay.getDay()) % 7;
         currDay.setDate(currDay.getDate() + distance);
 
-        const currDate = currDay.toDateString();
+        const currDate =
+          pad(currDay.getMonth() + 1) +
+          '-' +
+          pad(currDay.getDate()) +
+          '-' +
+          currDay.getFullYear();
 
-        console.log(
-          val.startDate,
-          val.endDate,
-          new Date(val.startDate).toLocaleTimeString(),
-          currDay,
-          currDate,
-        );
+        const startDate = new Date(val.startDate);
 
-        const firstDate = new Date(
-          currDay.toDateString() +
-            ' ' +
-            new Date(val.startDate).toLocaleTimeString(),
-        );
+        const endDate = new Date(val.endDate);
 
-        const secondDate = new Date(
-          currDay.toDateString() +
-            ' ' +
-            new Date(val.endDate).toLocaleTimeString(),
-        );
+        const startTime =
+          pad(startDate.getHours()) +
+          ':' +
+          pad(startDate.getMinutes()) +
+          ':' +
+          pad(startDate.getSeconds());
+
+        const endTime =
+          pad(endDate.getHours()) +
+          ':' +
+          pad(endDate.getMinutes()) +
+          ':' +
+          pad(endDate.getSeconds());
+
+        const firstDate = new Date(currDate + ' ' + startTime);
+        const secondDate = new Date(currDate + ' ' + endTime);
+
         const newAvail = new Availability();
         newAvail.startDate = firstDate;
         newAvail.endDate = secondDate;
