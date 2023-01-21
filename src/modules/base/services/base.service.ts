@@ -296,7 +296,11 @@ export class BaseService {
         const firstDate = new Date(currDate + ' ' + startTime);
         const secondDate = new Date(currDate + ' ' + endTime);
 
+        firstDate.setHours(firstDate.getHours() - firstDate.getUTCHours());
+        secondDate.setHours(secondDate.getHours() - secondDate.getUTCHours());
+
         const newAvail = new Availability();
+
         newAvail.startDate = firstDate;
         newAvail.endDate = secondDate;
         newAvail.user = user;
