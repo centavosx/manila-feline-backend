@@ -230,6 +230,8 @@ export class OtherService {
       console.log(
         new Date(date).toDateString(),
         new Date(d.startDate).toDateString(),
+        date,
+        d.startDate,
       );
       return (
         new Date(date).getDay() === d.startDate.getDay() &&
