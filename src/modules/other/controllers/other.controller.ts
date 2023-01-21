@@ -47,13 +47,22 @@ export class OtherController {
   }
 
   @Roles(RoleTypes.ADMIN)
+  @Get('mail/' + Parameter.id())
+  public async getMessage(
+    @Param('id')
+    id: string,
+  ) {
+    return await this.otherService.getMail(id);
+  }
+
+  @Roles(RoleTypes.ADMIN)
   @Patch('mail')
   public async deleteMessage(@Body() data: DeleteDto) {
     return await this.otherService.deleteMessage(data);
   }
 
   @Roles(RoleTypes.ADMIN)
-  @Post(Parameter.id() + '/reply')
+  @Post('mail/' + Parameter.id() + '/reply')
   public async replyMail(
     @Param('id')
     id: string,

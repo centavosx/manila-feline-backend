@@ -37,39 +37,46 @@ export class BaseService {
   ) {}
 
   public async getAll(query: SearchUserDto): Promise<ResponseDto> {
+    const findData = {
+      services: !!query.serviceId
+        ? {
+            id: query.serviceId,
+          }
+        : undefined,
+      roles: !!query.role
+        ? {
+            name: query.role,
+          }
+        : undefined,
+    };
+
     const data = await this.userRepository.find({
-      where: {
-        name: !!query.search ? ILike('%' + query.search + '%') : undefined,
-        services: !!query.serviceId
-          ? {
-              id: query.serviceId,
-            }
-          : undefined,
-        roles: !!query.role
-          ? {
-              name: query.role,
-            }
-          : undefined,
-      },
+      where: [
+        {
+          name: !!query.search ? ILike('%' + query.search + '%') : undefined,
+          ...findData,
+        },
+        {
+          name: !!query.search ? ILike('%' + query.search + '%') : undefined,
+          ...findData,
+        },
+      ],
       skip: (query.page ?? 0) * (query.limit ?? 20),
       take: query.limit ?? 20,
       relations: ['roles', 'services'],
     });
 
     const total = await this.userRepository.count({
-      where: {
-        name: !!query.search ? ILike('%' + query.search + '%') : undefined,
-        services: !!query.serviceId
-          ? {
-              id: query.serviceId,
-            }
-          : undefined,
-        roles: !!query.role
-          ? {
-              name: query.role,
-            }
-          : undefined,
-      },
+      where: [
+        {
+          name: !!query.search ? ILike('%' + query.search + '%') : undefined,
+          ...findData,
+        },
+        {
+          name: !!query.search ? ILike('%' + query.search + '%') : undefined,
+          ...findData,
+        },
+      ],
 
       relations: ['roles', 'services'],
     });
@@ -255,9 +262,16 @@ export class BaseService {
         const currDay = new Date();
         const distance = (index + 7 - currDay.getDay()) % 7;
         currDay.setDate(currDay.getDate() + distance);
-        const split = val.split(' to ');
-        const firstDate = new Date(currDay.toDateString() + ' ' + split[0]);
-        const secondDate = new Date(currDay.toDateString() + ' ' + split[1]);
+        const firstDate = new Date(
+          currDay.toDateString() +
+            ' ' +
+            new Date(val.startDate).toLocaleTimeString(),
+        );
+        const secondDate = new Date(
+          currDay.toDateString() +
+            ' ' +
+            new Date(val.endDate).toLocaleTimeString(),
+        );
         const newAvail = new Availability();
         newAvail.startDate = firstDate;
         newAvail.endDate = secondDate;

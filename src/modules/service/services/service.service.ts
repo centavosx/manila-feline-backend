@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Role, Services, User } from '../../../entities';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, ILike, Repository } from 'typeorm';
 
 import { CreateServiceDto, SearchServiceDto } from '../dto';
 import { DeleteDto, ResponseDto } from 'src/modules/base/dto';
@@ -30,11 +30,19 @@ export class ServiceService {
 
   public async getAll(query: SearchServiceDto): Promise<ResponseDto> {
     const data = await this.serviceRepository.find({
+      where: {
+        name: !!query.search ? ILike('%' + query.search + '%') : undefined,
+      },
+
       skip: (query.page ?? 0) * (query.limit ?? 50),
       take: query.limit ?? 50,
     });
 
-    const total = await this.serviceRepository.count();
+    const total = await this.serviceRepository.count({
+      where: {
+        name: !!query.search ? ILike('%' + query.search + '%') : undefined,
+      },
+    });
     return {
       data,
       total,

@@ -17,6 +17,7 @@ import {
 import {
   Brackets,
   DataSource,
+  ILike,
   IsNull,
   LessThanOrEqual,
   MoreThanOrEqual,
@@ -60,11 +61,38 @@ export class OtherService {
 
   public async getAll(query: SearchUserDto): Promise<ResponseDto> {
     const data = await this.contactRepository.find({
+      where: !!query.search
+        ? [
+            {
+              name: ILike('%' + query.search + '%'),
+            },
+            {
+              from: ILike('%' + query.search + '%'),
+            },
+            {
+              subject: ILike('%' + query.search + '%'),
+            },
+          ]
+        : undefined,
       skip: (query.page ?? 0) * (query.limit ?? 20),
       take: query.limit ?? 20,
     });
 
-    const total = await this.contactRepository.count();
+    const total = await this.contactRepository.count({
+      where: !!query.search
+        ? [
+            {
+              name: ILike('%' + query.search + '%'),
+            },
+            {
+              from: ILike('%' + query.search + '%'),
+            },
+            {
+              subject: ILike('%' + query.search + '%'),
+            },
+          ]
+        : undefined,
+    });
 
     return {
       data,
@@ -77,6 +105,17 @@ export class OtherService {
     Object.assign(newContact, data);
     await this.mailService.sendMail(data.from, data.subject, 'email', {});
     return await this.contactRepository.save(newContact);
+  }
+
+  public async getMail(id: string) {
+    const contact = await this.contactRepository.findOne({
+      where: {
+        id,
+      },
+      relations: ['replies'],
+    });
+    if (!contact) throw new NotFoundException('Contact not found');
+    return contact;
   }
 
   public async replyMail(id: string, data: ReplyMailDto) {

@@ -8,6 +8,7 @@ import {
   MoreThanOrEqual,
   Repository,
   And,
+  ILike,
 } from 'typeorm';
 
 import { SearchAppointmentDto, UpdateAppointmentDto } from '../dto';
@@ -37,19 +38,34 @@ export class AppointmentService {
     const greaterDate = data.startDate,
       lessDate = data.endDate;
 
+    const searchData = {
+      status: data.status,
+      time: data.time,
+      verification: IsNull(),
+      date:
+        !!greaterDate && !!lessDate
+          ? And(
+              LessThanOrEqual(new Date(lessDate)),
+              MoreThanOrEqual(new Date(greaterDate)),
+            )
+          : undefined,
+    };
+
     const appointment = await this.appointmentRepository.find({
-      where: {
-        status: data.status,
-        time: data.time,
-        verification: IsNull(),
-        date:
-          !!greaterDate && !!lessDate
-            ? And(
-                LessThanOrEqual(new Date(lessDate)),
-                MoreThanOrEqual(new Date(greaterDate)),
-              )
-            : undefined,
-      },
+      where: [
+        {
+          name: !!data.search ? ILike('%' + data.search + '%') : undefined,
+          ...searchData,
+        },
+        {
+          email: !!data.search ? ILike('%' + data.search + '%') : undefined,
+          ...searchData,
+        },
+        {
+          refId: !!data.search ? ILike('%' + data.search + '%') : undefined,
+          ...searchData,
+        },
+      ],
       order: {
         created: 'DESC',
       },
@@ -59,18 +75,20 @@ export class AppointmentService {
     });
 
     const total = await this.appointmentRepository.count({
-      where: {
-        status: data.status,
-        time: data.time,
-        verification: IsNull(),
-        date:
-          !!greaterDate && !!lessDate
-            ? And(
-                LessThanOrEqual(new Date(lessDate)),
-                MoreThanOrEqual(new Date(greaterDate)),
-              )
-            : undefined,
-      },
+      where: [
+        {
+          name: !!data.search ? ILike('%' + data.search + '%') : undefined,
+          ...searchData,
+        },
+        {
+          email: !!data.search ? ILike('%' + data.search + '%') : undefined,
+          ...searchData,
+        },
+        {
+          refId: !!data.search ? ILike('%' + data.search + '%') : undefined,
+          ...searchData,
+        },
+      ],
       order: {
         created: 'DESC',
       },
@@ -172,35 +190,37 @@ export class AppointmentService {
 
     const updated = await this.appointmentRepository.save(appointment);
 
-    await this.mailService.sendMail(
-      updated.email,
-      'Your appointment status has been updated',
-      'appointment',
-      {
-        refId: updated.refId,
-        name: updated.name,
-        status: updated.status,
-        time:
-          !!updated.startDate && !!updated.endDate
-            ? 'Time: ' +
-              format(
-                new Date(updated?.startDate ?? 0),
-                'EEEE, LLLL do yyyy  hh:mm a',
-              ) +
-              ' to ' +
-              format(
-                new Date(updated?.endDate ?? 0),
-                'EEEE, LLLL do yyyy  hh:mm a',
-              )
+    try {
+      await this.mailService.sendMail(
+        updated.email,
+        'Your appointment status has been updated',
+        'appointment',
+        {
+          refId: updated.refId,
+          name: updated.name,
+          status: updated.status,
+          time:
+            !!updated.startDate && !!updated.endDate
+              ? 'Time: ' +
+                format(
+                  new Date(updated?.startDate ?? 0),
+                  'EEEE, LLLL do yyyy  hh:mm a',
+                ) +
+                ' to ' +
+                format(
+                  new Date(updated?.endDate ?? 0),
+                  'EEEE, LLLL do yyyy  hh:mm a',
+                )
+              : '',
+          doctor: !!appointment.doctor
+            ? 'Doctor: Dr ' + appointment.doctor.name
             : '',
-        doctor: !!appointment.doctor
-          ? 'Doctor: Dr ' + appointment.doctor.name
-          : '',
-        service: updated.service.name,
-      },
-    );
-
-    return updated;
+          service: updated.service.name,
+        },
+      );
+    } finally {
+      return updated;
+    }
   }
 
   public async newAppointment(data: CreateAppointmentDto) {
@@ -221,17 +241,18 @@ export class AppointmentService {
       new Date().getTime().toString(36) + Math.random().toString(36).slice(8)
     ).toUpperCase();
     appointment.message = data.message ?? '';
-
-    await this.mailService.sendMail(
-      appointment.email,
-      'Your booking is now verified',
-      'verified',
-      {
-        name: appointment.name,
-        code: appointment.refId,
-      },
-    );
-
-    return await this.appointmentRepository.save(appointment);
+    try {
+      await this.mailService.sendMail(
+        appointment.email,
+        'Your booking is now verified',
+        'verified',
+        {
+          name: appointment.name,
+          code: appointment.refId,
+        },
+      );
+    } finally {
+      return await this.appointmentRepository.save(appointment);
+    }
   }
 }
