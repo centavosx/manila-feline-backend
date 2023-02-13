@@ -2,7 +2,6 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
   Post,
   Patch,
   Query,
@@ -10,7 +9,6 @@ import {
   Put,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { ParseUUIDPipe } from '@nestjs/common/pipes';
 import { Param } from '@nestjs/common/decorators';
 import { Roles } from '../../../decorators/roles.decorator';
 import {
@@ -27,7 +25,7 @@ import { Roles as RoleTypes } from '../../../enum';
 import { Parameter } from '../../../helpers';
 import { MailService } from '../../../mail/mail.service';
 import { User } from '../../../decorators';
-import { Role, User as Usertype } from '../../../entities';
+import { User as Usertype } from '../../../entities';
 
 @ApiTags('user')
 @Controller('user')

@@ -9,7 +9,7 @@ import {
   IsString,
   IsUUID,
 } from 'class-validator';
-import { AmOrPm } from 'src/entities';
+import { AmOrPm } from '../../../entities';
 
 export class CreateAppointmentDto {
   @ApiProperty()

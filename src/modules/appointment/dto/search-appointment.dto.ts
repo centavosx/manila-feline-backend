@@ -1,8 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import { IsString, IsEnum, IsOptional, IsInt } from 'class-validator';
-import { AmOrPm, Status } from 'src/entities';
-import { Roles } from '../../../enum';
+import { AmOrPm, Status } from '../../../entities';
 
 const isInteger = (value: any): boolean => /^\+?(0|[1-9]\d*)$/.test(value);
 const toNumber = (value: any): number => {

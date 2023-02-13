@@ -2,30 +2,26 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
   Post,
   Patch,
   Query,
   Body,
-  Put,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { ParseUUIDPipe } from '@nestjs/common/pipes';
+
 import { Param } from '@nestjs/common/decorators';
 import { Roles } from '../../../decorators/roles.decorator';
 
 import { Roles as RoleTypes } from '../../../enum';
 import { Parameter } from '../../../helpers';
-import { MailService } from '../../../mail/mail.service';
 
-import { SearchUserDto, DeleteDto } from 'src/modules/base/dto';
 import { AppointmentService } from '../services/appointment.service';
 import {
   DeleteAppointmentDto,
   SearchAppointmentDto,
   UpdateAppointmentDto,
 } from '../dto';
-import { CreateAppointmentDto } from 'src/modules/other/dto';
+import { CreateAppointmentDto } from '../../other/dto';
 
 @ApiTags('appointments')
 @Controller('appointments')

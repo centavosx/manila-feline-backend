@@ -4,11 +4,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Role, Services, User } from '../../../entities';
+import { Services } from '../../../entities';
 import { DataSource, ILike, Repository } from 'typeorm';
 
 import { CreateServiceDto, SearchServiceDto } from '../dto';
-import { DeleteDto, ResponseDto } from 'src/modules/base/dto';
+import { DeleteDto, ResponseDto } from '../../base/dto';
 
 @Injectable()
 export class ServiceService {

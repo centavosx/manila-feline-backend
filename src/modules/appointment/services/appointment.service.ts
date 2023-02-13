@@ -13,9 +13,9 @@ import {
 
 import { SearchAppointmentDto, UpdateAppointmentDto } from '../dto';
 
-import { MailService } from 'src/mail/mail.service';
-import { ResponseDto } from 'src/modules/base/dto';
-import { Roles } from 'src/enum';
+import { MailService } from '../../../mail/mail.service';
+import { ResponseDto } from '../../base/dto';
+import { Roles } from '../../../enum';
 import { CreateAppointmentDto } from 'src/modules/other/dto';
 import { format } from 'date-fns';
 

@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { TokenService } from 'src/authentication/services/token.service';
-import { Replies } from 'src/entities/replies.entity';
-import { MailService } from 'src/mail/mail.service';
+
+import { Replies } from '../../entities/replies.entity';
+import { MailService } from '../../mail/mail.service';
 import {
   Role,
   User,
