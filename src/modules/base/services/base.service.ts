@@ -20,7 +20,7 @@ import {
 
 import { ifMatched, hashPassword } from '../../../helpers/hash.helper';
 import { TokenService } from '../../../authentication/services/token.service';
-import { Roles } from 'src/enum';
+import { Roles } from '../../../enum';
 
 function pad(d: number) {
   return d < 10 ? '0' + d.toString() : d.toString();

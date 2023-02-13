@@ -1,5 +1,4 @@
 import {
-  ConflictException,
   Injectable,
   NotFoundException,
   BadRequestException,
@@ -14,16 +13,7 @@ import {
   Services,
   User,
 } from '../../../entities';
-import {
-  Brackets,
-  DataSource,
-  ILike,
-  IsNull,
-  LessThanOrEqual,
-  MoreThanOrEqual,
-  Not,
-  Repository,
-} from 'typeorm';
+import { Brackets, DataSource, ILike, Repository } from 'typeorm';
 
 import {
   CreateAppointmentDto,
@@ -32,11 +22,10 @@ import {
   SearchDoctorDto,
   VerifyAppointmentDto,
 } from '../dto';
-import { ifMatched, hashPassword } from '../../../helpers/hash.helper';
-import { TokenService } from '../../../authentication/services/token.service';
-import { MailService } from 'src/mail/mail.service';
-import { DeleteDto, ResponseDto, SearchUserDto } from 'src/modules/base/dto';
-import { Roles } from 'src/enum';
+
+import { MailService } from '../../../mail/mail.service';
+import { DeleteDto, ResponseDto, SearchUserDto } from '../../base/dto';
+import { Roles } from '../../../enum';
 
 @Injectable()
 export class OtherService {

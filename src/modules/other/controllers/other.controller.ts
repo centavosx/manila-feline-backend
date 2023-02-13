@@ -25,7 +25,7 @@ import { Roles as RoleTypes } from '../../../enum';
 import { Parameter } from '../../../helpers';
 import { MailService } from '../../../mail/mail.service';
 
-import { SearchUserDto, DeleteDto } from 'src/modules/base/dto';
+import { SearchUserDto, DeleteDto } from '../../base/dto';
 
 @ApiTags('other')
 @Controller('other')

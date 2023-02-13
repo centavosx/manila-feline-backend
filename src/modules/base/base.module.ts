@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { TokenService } from 'src/authentication/services/token.service';
-import { MailService } from 'src/mail/mail.service';
+import { TokenService } from '../../authentication/services/token.service';
+import { MailService } from '../../mail/mail.service';
 import { Role, User, Token, Services, Availability } from '../../entities';
 import { BaseController, RoleController } from './controllers';
 import { BaseService, RoleService } from './services';
