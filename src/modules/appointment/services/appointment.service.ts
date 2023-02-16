@@ -205,6 +205,10 @@ export class AppointmentService {
     const updated = await this.appointmentRepository.save(appointment);
 
     try {
+      const start = new Date(updated?.startDate ?? 0);
+      start.setHours(start.getHours() + 8);
+      const end = new Date(updated?.endDate ?? 0);
+      end.setHours(end.getHours() + 8);
       await this.mailService.sendMail(
         updated.email,
         'Your appointment status has been updated',
@@ -216,15 +220,9 @@ export class AppointmentService {
           time:
             !!updated.startDate && !!updated.endDate
               ? 'Time: ' +
-                format(
-                  new Date(updated?.startDate ?? 0),
-                  'EEEE, LLLL do yyyy  hh:mm a',
-                ) +
+                format(start, 'EEEE, LLLL do yyyy  hh:mm a') +
                 ' to ' +
-                format(
-                  new Date(updated?.endDate ?? 0),
-                  'EEEE, LLLL do yyyy  hh:mm a',
-                )
+                format(end, 'EEEE, LLLL do yyyy  hh:mm a')
               : '',
           doctor: !!appointment.doctor
             ? 'Doctor: Dr ' + appointment.doctor.name
