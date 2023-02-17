@@ -13,7 +13,7 @@ export class TokenService {
 
   public async createAccessToken(data: User) {
     return jwt.sign({ ...data }, process.env.ACCESS_KEY as string, {
-      expiresIn: '10m',
+      expiresIn: '24h',
     });
   }
 
