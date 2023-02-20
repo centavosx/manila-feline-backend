@@ -266,7 +266,7 @@ export class OtherService {
       .leftJoinAndSelect('doctor.roles', 'roles');
 
     const mainWhereCondition = new Brackets((sub) => {
-      const query = `(doctor.id = :id AND roles.name = :role AND services.id = :serviceId) AND (TO_CHAR(availability.startDate, 'hh12:mi AM') LIKE :time OR TO_CHAR(availability.endDate, 'hh12:mi AM') LIKE :time)`;
+      const query = `(doctor.id = :id AND roles.name = :role AND services.id = :serviceId) AND (TO_CHAR(availability.startDate + interval '8 hours', 'hh12:mi AM') LIKE :time OR TO_CHAR(availability.endDate + interval '8 hours', 'hh12:mi AM') LIKE :time)`;
       return sub.where(query, {
         id,
         role: Roles.DOCTOR,
