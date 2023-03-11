@@ -16,6 +16,7 @@ import {
   DeleteDto,
   IdDto,
   LoginDto,
+  RegisterUserDto,
   SearchSingle,
   SearchUserDto,
   TimeSetterDto,
@@ -52,13 +53,25 @@ export class BaseController {
     return await this.baseService.getUser(userId);
   }
 
+  @Roles(RoleTypes.ADMIN)
   @Post()
   public async createUser(@Body() data: CreateUserDto) {
     return await this.baseService.createUser(data);
   }
 
+  @Roles(RoleTypes.ADMIN)
+  @Post('/register')
+  public async registerUser(@Body() data: RegisterUserDto) {
+    return await this.baseService.createUser(data);
+  }
+
   @Post('/login')
   public async loginUser(@Body() data: LoginDto) {
+    return await this.baseService.loginUser(data, true);
+  }
+
+  @Post('/regularLogin')
+  public async regularLogin(@Body() data: LoginDto) {
     return await this.baseService.loginUser(data);
   }
 

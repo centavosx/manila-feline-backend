@@ -36,6 +36,14 @@ export class User {
   @Column({ nullable: true })
   position: string;
 
+  @Exclude()
+  @Column({ default: true })
+  verified?: boolean;
+
+  @Exclude()
+  @Column({ nullable: true, default: null })
+  code?: string;
+
   @ManyToMany(() => Role, (role) => role.users, {
     eager: true,
   })

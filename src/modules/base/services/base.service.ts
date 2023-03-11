@@ -16,6 +16,7 @@ import {
   DeleteDto,
   IdDto,
   TimeSetterDto,
+  RegisterUserDto,
 } from '../dto';
 
 import { ifMatched, hashPassword } from '../../../helpers/hash.helper';
@@ -102,7 +103,7 @@ export class BaseService {
     throw new NotFoundException();
   }
 
-  public async addUser(data: CreateUserDto, role: Role) {
+  public async addUser(data: CreateUserDto | RegisterUserDto, role: Role) {
     let user: User;
     const queryRunner = this.dataSource.createQueryRunner();
 
@@ -135,30 +136,40 @@ export class BaseService {
     return user;
   }
 
-  public async createUser(data: CreateUserDto) {
+  public async createUser(data: CreateUserDto | RegisterUserDto) {
+    let dataToSave = data;
     const isUserExist = await this.userRepository.findOne({
       where: {
-        email: data.email,
+        email: dataToSave.email,
       },
     });
 
-    if (!!isUserExist) throw new ConflictException('User already exist');
+    if (!!isUserExist) {
+      if (
+        (!(dataToSave as any).role &&
+          isUserExist.roles.find((v) => v.name === Roles.USER)) ||
+        (dataToSave as any).role
+      )
+        throw new ConflictException('User already exist');
+      dataToSave = isUserExist;
+    }
+
     const role = await this.roleRepository.findOne({
       where: {
-        name: data.role,
+        name: (dataToSave as any).role ?? Roles.USER,
       },
     });
 
     if (!role) throw new NotFoundException('Role not found');
-    return await this.addUser(data, role);
+    return await this.addUser(dataToSave, role);
   }
 
-  public async loginUser(data: LoginDto) {
+  public async loginUser(data: LoginDto, isAdmin?: boolean) {
     const user = await this.userRepository.findOne({
       where: {
         email: data.email,
         roles: {
-          name: Roles.ADMIN,
+          name: isAdmin ? Roles.ADMIN : Roles.USER,
         },
       },
       relations: ['roles'],
