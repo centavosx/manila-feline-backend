@@ -52,3 +52,10 @@ export class RegisterUserDto {
   @IsNotEmpty()
   password: string;
 }
+
+export class CodeDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  code: string;
+}

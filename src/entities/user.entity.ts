@@ -36,7 +36,6 @@ export class User {
   @Column({ nullable: true })
   position: string;
 
-  @Exclude()
   @Column({ default: true })
   verified?: boolean;
 

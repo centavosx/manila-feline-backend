@@ -23,6 +23,7 @@ import { ifMatched, hashPassword } from '../../../helpers/hash.helper';
 import { TokenService } from '../../../authentication/services/token.service';
 import { Roles } from '../../../enum';
 import { MailService } from '../../../mail/mail.service';
+import { UnauthorizedException } from '@nestjs/common/exceptions';
 
 function pad(d: number) {
   return d < 10 ? '0' + d.toString() : d.toString();
@@ -105,6 +106,36 @@ export class BaseService {
     throw new NotFoundException();
   }
 
+  public async verifyUser(code: string, user: User) {
+    if (user.code === code) {
+      user.verified = true;
+      user.code = null;
+      const newU = await this.userRepository.save(user);
+      const tokens = await this.tokenService.generateTokens(newU);
+      await this.tokenService.whitelistToken(tokens.refreshToken, user.id);
+      return tokens;
+    }
+    throw new UnauthorizedException('Invalid code');
+  }
+
+  public async refreshCode(user: User) {
+    user.verified = false;
+    user.code = Math.random().toString(36).slice(2).toUpperCase();
+    const newUser = await this.userRepository.save(user);
+
+    await this.mailService.sendMail(
+      newUser.email,
+      'Please verify your account',
+      'verification-user',
+      {
+        name: newUser.name,
+        code: newUser.code,
+      },
+    );
+
+    return newUser;
+  }
+
   public async addUser(
     data: CreateUserDto | RegisterUserDto,
     role: Role,
@@ -140,8 +171,8 @@ export class BaseService {
       if (isVerification)
         await this.mailService.sendMail(
           user.email,
-          'Please verify your appointment',
-          'verification',
+          'Please verify your account',
+          'verification-user',
           {
             name: user.name,
             code: user.code,
@@ -154,6 +185,11 @@ export class BaseService {
     } finally {
       await queryRunner.release();
     }
+    if (isVerification && !!user) {
+      const tokens = await this.tokenService.generateTokens(user);
+      await this.tokenService.whitelistToken(tokens.refreshToken, user.id);
+      return tokens;
+    }
     return user;
   }
 
@@ -161,7 +197,7 @@ export class BaseService {
     data: CreateUserDto | RegisterUserDto,
     isVerification?: boolean,
   ) {
-    let dataToSave = data;
+    let dataToSave: CreateUserDto | RegisterUserDto | User = data;
     const isUserExist = await this.userRepository.findOne({
       where: {
         email: dataToSave.email,
@@ -169,11 +205,7 @@ export class BaseService {
     });
 
     if (!!isUserExist) {
-      if (
-        (!(dataToSave as any).role &&
-          isUserExist.roles.find((v) => v.name === Roles.USER)) ||
-        (dataToSave as any).role
-      )
+      if (!!isUserExist.verified)
         throw new ConflictException('User already exist');
       dataToSave = isUserExist;
     }
@@ -185,21 +217,43 @@ export class BaseService {
     });
 
     if (!role) throw new NotFoundException('Role not found');
-    return await this.addUser(dataToSave, role, isVerification);
+    return await this.addUser(
+      {
+        ...dataToSave,
+        roles: undefined,
+        services: undefined,
+        availability: undefined,
+        appointment: undefined,
+        created: undefined,
+        modified: undefined,
+      } as any,
+      role,
+      isVerification,
+    );
   }
 
   public async loginUser(data: LoginDto, isAdmin?: boolean) {
     const user = await this.userRepository.findOne({
       where: {
         email: data.email,
-        roles: {
-          name: isAdmin ? Roles.ADMIN : Roles.USER,
-        },
+        roles: isAdmin
+          ? {
+              name: Roles.ADMIN,
+            }
+          : [
+              {
+                name: Roles.ADMIN,
+              },
+              {
+                name: Roles.USER,
+              },
+            ],
       },
       relations: ['roles'],
     });
 
-    if (!user) throw new NotFoundException('User not found');
+    if (!user || !user.verified) throw new NotFoundException('User not found');
+
     if (!(await ifMatched(data.password, user.password)))
       throw new BadRequestException('Wrong password');
 

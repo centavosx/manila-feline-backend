@@ -12,6 +12,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { Param } from '@nestjs/common/decorators';
 import { Roles } from '../../../decorators/roles.decorator';
 import {
+  CodeDto,
   CreateUserDto,
   DeleteDto,
   IdDto,
@@ -27,6 +28,7 @@ import { Parameter } from '../../../helpers';
 import { MailService } from '../../../mail/mail.service';
 import { User } from '../../../decorators';
 import { User as Usertype } from '../../../entities';
+import { ForbiddenException } from '@nestjs/common/exceptions';
 
 @ApiTags('user')
 @Controller('user')
@@ -42,7 +44,7 @@ export class BaseController {
     return await this.baseService.getAll(queryParameters);
   }
 
-  @Roles(RoleTypes.ADMIN)
+  @Roles(RoleTypes.ADMIN, RoleTypes.USER)
   @Get(Parameter.id() + '/information')
   public async getUser(
     @User() user: Usertype,
@@ -50,6 +52,13 @@ export class BaseController {
     id: string,
   ) {
     const userId = id === 'me' ? user.id : id;
+    if (
+      user.roles.every(
+        (v) => v.name === RoleTypes.USER || v.name !== RoleTypes.ADMIN,
+      ) &&
+      id !== 'me'
+    )
+      throw new ForbiddenException('Not allowed');
     return await this.baseService.getUser(userId);
   }
 
@@ -59,10 +68,21 @@ export class BaseController {
     return await this.baseService.createUser(data);
   }
 
-  @Roles(RoleTypes.ADMIN)
   @Post('/register')
   public async registerUser(@Body() data: RegisterUserDto) {
     return await this.baseService.createUser(data, true);
+  }
+
+  @Roles(RoleTypes.USER, RoleTypes.ADMIN)
+  @Post('/verify')
+  public async verifyUser(@User() user: Usertype, @Body() { code }: CodeDto) {
+    return await this.baseService.verifyUser(code, user);
+  }
+
+  @Roles(RoleTypes.USER, RoleTypes.ADMIN)
+  @Get('/refresh-code')
+  public async refreshCode(@User() user: Usertype) {
+    return await this.baseService.refreshCode(user);
   }
 
   @Post('/login')
