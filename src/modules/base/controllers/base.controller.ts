@@ -62,7 +62,7 @@ export class BaseController {
   @Roles(RoleTypes.ADMIN)
   @Post('/register')
   public async registerUser(@Body() data: RegisterUserDto) {
-    return await this.baseService.createUser(data);
+    return await this.baseService.createUser(data, true);
   }
 
   @Post('/login')

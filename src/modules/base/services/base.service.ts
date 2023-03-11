@@ -22,6 +22,7 @@ import {
 import { ifMatched, hashPassword } from '../../../helpers/hash.helper';
 import { TokenService } from '../../../authentication/services/token.service';
 import { Roles } from '../../../enum';
+import { MailService } from '../../../mail/mail.service';
 
 function pad(d: number) {
   return d < 10 ? '0' + d.toString() : d.toString();
@@ -40,6 +41,7 @@ export class BaseService {
     @InjectRepository(Availability)
     private readonly availabilityRepository: Repository<Availability>,
     private readonly tokenService: TokenService,
+    private readonly mailService: MailService,
   ) {}
 
   public async getAll(query: SearchUserDto): Promise<ResponseDto> {
@@ -103,7 +105,11 @@ export class BaseService {
     throw new NotFoundException();
   }
 
-  public async addUser(data: CreateUserDto | RegisterUserDto, role: Role) {
+  public async addUser(
+    data: CreateUserDto | RegisterUserDto,
+    role: Role,
+    isVerification?: boolean,
+  ) {
     let user: User;
     const queryRunner = this.dataSource.createQueryRunner();
 
@@ -123,9 +129,24 @@ export class BaseService {
             name: role.name,
           },
         ],
-      });
+        verified: isVerification ? false : true,
+        code: isVerification
+          ? Math.random().toString(36).slice(2).toUpperCase()
+          : false,
+      } as User);
 
       user = await this.userRepository.save(newUser);
+
+      if (isVerification)
+        await this.mailService.sendMail(
+          user.email,
+          'Please verify your appointment',
+          'verification',
+          {
+            name: user.name,
+            code: user.code,
+          },
+        );
 
       await queryRunner.commitTransaction();
     } catch (err) {
@@ -136,7 +157,10 @@ export class BaseService {
     return user;
   }
 
-  public async createUser(data: CreateUserDto | RegisterUserDto) {
+  public async createUser(
+    data: CreateUserDto | RegisterUserDto,
+    isVerification?: boolean,
+  ) {
     let dataToSave = data;
     const isUserExist = await this.userRepository.findOne({
       where: {
@@ -161,7 +185,7 @@ export class BaseService {
     });
 
     if (!role) throw new NotFoundException('Role not found');
-    return await this.addUser(dataToSave, role);
+    return await this.addUser(dataToSave, role, isVerification);
   }
 
   public async loginUser(data: LoginDto, isAdmin?: boolean) {
