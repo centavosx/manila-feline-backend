@@ -32,6 +32,7 @@ export class ServiceService {
     const data = await this.serviceRepository.find({
       where: {
         name: !!query.search ? ILike('%' + query.search + '%') : undefined,
+        id: query.id,
       },
 
       skip: (query.page ?? 0) * (query.limit ?? 50),
@@ -41,6 +42,7 @@ export class ServiceService {
     const total = await this.serviceRepository.count({
       where: {
         name: !!query.search ? ILike('%' + query.search + '%') : undefined,
+        id: query.id,
       },
     });
     return {

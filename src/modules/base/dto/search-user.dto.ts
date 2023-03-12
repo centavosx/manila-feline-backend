@@ -45,6 +45,11 @@ export class SearchUserDto {
   @IsOptional()
   @IsString()
   serviceId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  id?: string;
 }
 
 export class SearchSingle {

@@ -148,6 +148,18 @@ export class OtherService {
       .leftJoinAndSelect('doctor.availability', 'availability')
       .leftJoinAndSelect('doctor.services', 'services');
 
+    if (!!data.id) {
+      const whereCondition = new Brackets((sub) => {
+        const query = `doctor.id = :id`;
+        return sub.where(query, {
+          id: data.id,
+        });
+      });
+
+      doctor.andWhere(whereCondition);
+      count.andWhere(whereCondition);
+    }
+
     if (!!data.time) {
       const whereCondition = new Brackets((sub) => {
         const query = `TO_CHAR(availability.startDate + interval '${

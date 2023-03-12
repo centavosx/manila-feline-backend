@@ -48,6 +48,7 @@ export class BaseService {
 
   public async getAll(query: SearchUserDto): Promise<ResponseDto> {
     const findData = {
+      id: query.id,
       services: !!query.serviceId
         ? {
             id: query.serviceId,

@@ -69,6 +69,11 @@ export class SearchDoctorDto {
   @IsOptional()
   @IsInt()
   hoursBetweenUtc?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  id?: string;
 }
 
 export class DateDto {

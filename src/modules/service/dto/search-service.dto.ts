@@ -11,6 +11,11 @@ export class SearchServiceDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  id?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   search?: string;
 
   @ApiPropertyOptional()
