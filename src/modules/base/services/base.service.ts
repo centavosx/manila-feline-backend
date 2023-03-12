@@ -297,12 +297,26 @@ export class BaseService {
       where: data.ids.map((d) => ({ id: d })),
     });
 
+    const userToUpdate: User[] = [];
+    const userToDelete: string[] = [];
+
     if (!!query.role)
       for (const v in users) {
         users[v].roles = users[v].roles.filter((d) => d.name !== query.role);
+        if (users[v].roles.length > 0) {
+          userToUpdate.push(users[v]);
+        } else {
+          userToDelete.push(users[v].id);
+        }
       }
 
-    return await this.userRepository.save(users);
+    if (userToUpdate.length > 0) await this.userRepository.save(userToUpdate);
+    if (userToDelete.length > 0) {
+      await this.tokenService.unlistUserIds(userToDelete);
+      await this.userRepository.delete(userToDelete);
+    }
+
+    return;
   }
 
   public async addService(id: string, data: IdDto) {

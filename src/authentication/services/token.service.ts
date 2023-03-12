@@ -54,6 +54,15 @@ export class TokenService {
     });
   }
 
+  public async unlistUserIds(ids: string[]) {
+    return await this.tokenRepository
+      .createQueryBuilder('token')
+      .leftJoin('token.user', 'user')
+      .where(`user.id IN (:...ids)`, { ids })
+      .delete()
+      .execute();
+  }
+
   public async ifWhiteListed(token: string, userId: string) {
     try {
       const verify = await this.tokenRepository.findOneOrFail({
