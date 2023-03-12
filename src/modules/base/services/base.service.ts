@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Availability, Role, Services, User } from '../../../entities';
-import { DataSource, Repository, ILike } from 'typeorm';
+import { DataSource, Repository, ILike, Raw } from 'typeorm';
 
 import {
   LoginDto,
@@ -63,11 +63,15 @@ export class BaseService {
     const data = await this.userRepository.find({
       where: [
         {
-          name: !!query.search ? ILike('%' + query.search + '%') : undefined,
+          name: !!query.search
+            ? Raw((v) => `LOWER(${v}) LIKE LOWER('%${query.search}%')`)
+            : undefined,
           ...findData,
         },
         {
-          name: !!query.search ? ILike('%' + query.search + '%') : undefined,
+          email: !!query.search
+            ? Raw((v) => `LOWER(${v}) LIKE LOWER('%${query.search}%')`)
+            : undefined,
           ...findData,
         },
       ],
@@ -79,11 +83,15 @@ export class BaseService {
     const total = await this.userRepository.count({
       where: [
         {
-          name: !!query.search ? ILike('%' + query.search + '%') : undefined,
+          name: !!query.search
+            ? Raw((v) => `LOWER(${v}) LIKE LOWER('%${query.search}%')`)
+            : undefined,
           ...findData,
         },
         {
-          name: !!query.search ? ILike('%' + query.search + '%') : undefined,
+          email: !!query.search
+            ? Raw((v) => `LOWER(${v}) LIKE LOWER('%${query.search}%')`)
+            : undefined,
           ...findData,
         },
       ],
@@ -100,7 +108,7 @@ export class BaseService {
     const data = await this.userRepository.findOne({
       where: {
         id: id,
-        email,
+        email: email,
       },
     });
     if (!!data) return data;

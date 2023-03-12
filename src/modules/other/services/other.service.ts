@@ -166,7 +166,7 @@ export class OtherService {
 
     if (!!data.name) {
       const whereCondition = new Brackets((sub) => {
-        const query = `doctor.name LIKE :name OR doctor.position LIKE :name`;
+        const query = `LOWER(doctor.name) LIKE LOWER(:name) OR LOWER(doctor.position) LIKE LOWER(:name)`;
         return sub.where(query, {
           name: `%${data.name}%`,
         });
