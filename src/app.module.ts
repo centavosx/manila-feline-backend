@@ -38,10 +38,16 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(AuthMiddleware)
-      .exclude({ path: '/refresh', method: RequestMethod.GET })
+      .exclude(
+        { path: '/refresh', method: RequestMethod.GET },
+        { path: '/user/reset', method: RequestMethod.POST },
+      )
       .forRoutes('*');
     consumer
       .apply(RefreshMiddleware)
-      .forRoutes({ path: '/refresh', method: RequestMethod.GET });
+      .forRoutes(
+        { path: '/refresh', method: RequestMethod.GET },
+        { path: '/user/reset', method: RequestMethod.POST },
+      );
   }
 }

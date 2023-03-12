@@ -11,3 +11,10 @@ export class LoginDto {
   @IsNotEmpty()
   password: string;
 }
+
+export class ForgotPassDto {
+  @ApiProperty()
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+}

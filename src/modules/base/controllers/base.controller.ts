@@ -15,9 +15,11 @@ import {
   CodeDto,
   CreateUserDto,
   DeleteDto,
+  ForgotPassDto,
   IdDto,
   LoginDto,
   RegisterUserDto,
+  ResetTokenDto,
   SearchSingle,
   SearchUserDto,
   TimeSetterDto,
@@ -26,7 +28,7 @@ import { BaseService } from '../services/base.service';
 import { Roles as RoleTypes } from '../../../enum';
 import { Parameter } from '../../../helpers';
 import { MailService } from '../../../mail/mail.service';
-import { User } from '../../../decorators';
+import { Token, User } from '../../../decorators';
 import { User as Usertype } from '../../../entities';
 import { ForbiddenException } from '@nestjs/common/exceptions';
 
@@ -83,6 +85,11 @@ export class BaseController {
   @Get('/refresh-code')
   public async refreshCode(@User() user: Usertype) {
     return await this.baseService.refreshCode(user);
+  }
+
+  @Get('/forgot-pass')
+  public async forgotPass(@Query() { email }: ForgotPassDto) {
+    return await this.baseService.forgotPass(email);
   }
 
   @Post('/login')
@@ -143,5 +150,14 @@ export class BaseController {
     @Body() data: TimeSetterDto,
   ) {
     return await this.baseService.updateAvailability(id, data);
+  }
+
+  @Post('/reset')
+  public async resetToken(
+    @User() user: Usertype | undefined,
+    @Token() token: string | undefined,
+    @Body() dto: ResetTokenDto,
+  ) {
+    return await this.baseService.resetToken(user, token, dto);
   }
 }

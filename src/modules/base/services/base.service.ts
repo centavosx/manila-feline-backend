@@ -17,6 +17,7 @@ import {
   IdDto,
   TimeSetterDto,
   RegisterUserDto,
+  ResetTokenDto,
 } from '../dto';
 
 import { ifMatched, hashPassword } from '../../../helpers/hash.helper';
@@ -395,5 +396,31 @@ export class BaseService {
     }
 
     return await this.availabilityRepository.save(availabilities);
+  }
+
+  public async forgotPass(email: string) {
+    const user = await this.userRepository.findOne({ where: { email } });
+    const token = await this.tokenService.generateResetToken(user);
+    await this.tokenService.whitelistToken(token, user.id);
+    await this.mailService.sendMail(
+      user.email,
+      'Reset Password',
+      'reset-user',
+      {
+        name: user.name,
+        link: process.env.MAIN_URL + '/reset?token=' + token,
+      },
+    );
+    return;
+  }
+
+  public async resetToken(user: User, token: string, dto: ResetTokenDto) {
+    if (!user) throw new UnauthorizedException('Unauthorized');
+    user.password = await hashPassword(dto.password);
+    try {
+      await this.tokenService.unlistToken(token, user.id);
+    } catch {}
+    await this.userRepository.save(user);
+    return;
   }
 }

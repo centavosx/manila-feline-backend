@@ -11,9 +11,9 @@ export class TokenService {
     private readonly tokenRepository: Repository<Token>,
   ) {}
 
-  public async createAccessToken(data: User) {
+  public async createAccessToken(data: User, time?: string) {
     return jwt.sign({ ...data }, process.env.ACCESS_KEY as string, {
-      expiresIn: '24h',
+      expiresIn: time ?? '24h',
     });
   }
 
@@ -62,6 +62,7 @@ export class TokenService {
           tokenId: token,
         },
       });
+
       const date = new Date();
       if (verify.exp > date) return true;
       await this.unlistToken(token, userId);
@@ -77,5 +78,10 @@ export class TokenService {
       accessToken: await this.createAccessToken(data),
       refreshToken: await this.createRefreshToken(data),
     };
+  }
+
+  public async generateResetToken(data: User) {
+    delete data.password;
+    return await this.createAccessToken(data, '15m');
   }
 }
