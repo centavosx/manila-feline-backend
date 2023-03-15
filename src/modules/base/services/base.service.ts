@@ -313,6 +313,12 @@ export class BaseService {
     if (userToUpdate.length > 0) await this.userRepository.save(userToUpdate);
     if (userToDelete.length > 0) {
       await this.tokenService.unlistUserIds(userToDelete);
+      await this.availabilityRepository
+        .createQueryBuilder('availability')
+        .leftJoin('availability.user', 'user')
+        .where(`user.id IN (:...ids)`, { ids: userToDelete })
+        .delete()
+        .execute();
       await this.userRepository.delete(userToDelete);
     }
 
