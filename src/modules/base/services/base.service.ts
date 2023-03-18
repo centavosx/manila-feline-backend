@@ -428,7 +428,7 @@ export class BaseService {
     return await this.availabilityRepository.save(availabilities);
   }
 
-  public async forgotPass(email: string) {
+  public async forgotPass(email: string, origin: string) {
     const user = await this.userRepository.findOne({ where: { email } });
     const token = await this.tokenService.generateResetToken(user);
     await this.tokenService.whitelistToken(token, user.id);
@@ -438,7 +438,7 @@ export class BaseService {
       'reset-user',
       {
         name: user.name,
-        link: process.env.MAIN_URL + '/reset?token=' + token,
+        link: origin + '/reset?token=' + token,
       },
     );
     return;

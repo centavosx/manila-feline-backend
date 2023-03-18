@@ -6,6 +6,7 @@ import {
   Patch,
   Query,
   Body,
+  Headers,
   Put,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
@@ -89,8 +90,11 @@ export class BaseController {
   }
 
   @Get('/forgot-pass')
-  public async forgotPass(@Query() { email }: ForgotPassDto) {
-    return await this.baseService.forgotPass(email);
+  public async forgotPass(
+    @Query() { email }: ForgotPassDto,
+    @Headers('origin') origin: string,
+  ) {
+    return await this.baseService.forgotPass(email, origin);
   }
 
   @Post('/login')
