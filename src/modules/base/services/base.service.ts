@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Availability, Role, Services, User } from '../../../entities';
-import { DataSource, Repository, ILike, Raw } from 'typeorm';
+import { DataSource, Repository, Raw } from 'typeorm';
 
 import {
   LoginDto,
@@ -25,6 +25,7 @@ import { TokenService } from '../../../authentication/services/token.service';
 import { Roles } from '../../../enum';
 import { MailService } from '../../../mail/mail.service';
 import { UnauthorizedException } from '@nestjs/common/exceptions';
+import { UserInfoDto } from '../dto/update-user-info.dto';
 
 function pad(d: number) {
   return d < 10 ? '0' + d.toString() : d.toString();
@@ -65,13 +66,13 @@ export class BaseService {
       where: [
         {
           name: !!query.search
-            ? Raw((v) => `LOWER(${v}) LIKE LOWER('%${query.search}%')`)
+            ? Raw((v) => `LOWER(${v}) LIKE LOWER('${query.search}%')`)
             : undefined,
           ...findData,
         },
         {
           email: !!query.search
-            ? Raw((v) => `LOWER(${v}) LIKE LOWER('%${query.search}%')`)
+            ? Raw((v) => `LOWER(${v}) LIKE LOWER('${query.search}%')`)
             : undefined,
           ...findData,
         },
@@ -85,13 +86,13 @@ export class BaseService {
       where: [
         {
           name: !!query.search
-            ? Raw((v) => `LOWER(${v}) LIKE LOWER('%${query.search}%')`)
+            ? Raw((v) => `LOWER(${v}) LIKE LOWER('${query.search}%')`)
             : undefined,
           ...findData,
         },
         {
           email: !!query.search
-            ? Raw((v) => `LOWER(${v}) LIKE LOWER('%${query.search}%')`)
+            ? Raw((v) => `LOWER(${v}) LIKE LOWER('${query.search}%')`)
             : undefined,
           ...findData,
         },
@@ -450,6 +451,23 @@ export class BaseService {
       await this.tokenService.unlistToken(token, user.id);
     } catch {}
     await this.userRepository.save(user);
+    return;
+  }
+
+  public async updateUsers({ id, name, position, description }: UserInfoDto) {
+    const userData = await this.userRepository.findOne({
+      where: {
+        id,
+      },
+    });
+
+    userData.name = name;
+
+    userData.position = position;
+    userData.description = description;
+
+    await this.userRepository.save(userData);
+
     return;
   }
 }

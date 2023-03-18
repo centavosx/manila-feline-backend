@@ -31,6 +31,7 @@ import { MailService } from '../../../mail/mail.service';
 import { Token, User } from '../../../decorators';
 import { User as Usertype } from '../../../entities';
 import { ForbiddenException } from '@nestjs/common/exceptions';
+import { UserInfoDto } from '../dto/update-user-info.dto';
 
 @ApiTags('user')
 @Controller('user')
@@ -159,5 +160,10 @@ export class BaseController {
     @Body() dto: ResetTokenDto,
   ) {
     return await this.baseService.resetToken(user, token, dto);
+  }
+
+  @Patch('/update-users')
+  public async updateUsersData(@Body() users: UserInfoDto) {
+    return await this.baseService.updateUsers(users);
   }
 }

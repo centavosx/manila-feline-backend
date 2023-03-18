@@ -31,7 +31,7 @@ export class ServiceService {
   public async getAll(query: SearchServiceDto): Promise<ResponseDto> {
     const data = await this.serviceRepository.find({
       where: {
-        name: !!query.search ? ILike('%' + query.search + '%') : undefined,
+        name: !!query.search ? ILike(query.search + '%') : undefined,
         id: query.id,
       },
 
@@ -41,7 +41,7 @@ export class ServiceService {
 
     const total = await this.serviceRepository.count({
       where: {
-        name: !!query.search ? ILike('%' + query.search + '%') : undefined,
+        name: !!query.search ? ILike(query.search + '%') : undefined,
         id: query.id,
       },
     });

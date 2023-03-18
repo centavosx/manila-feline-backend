@@ -53,13 +53,13 @@ export class OtherService {
       where: !!query.search
         ? [
             {
-              name: ILike('%' + query.search + '%'),
+              name: ILike(query.search + '%'),
             },
             {
-              from: ILike('%' + query.search + '%'),
+              from: ILike(query.search + '%'),
             },
             {
-              subject: ILike('%' + query.search + '%'),
+              subject: ILike(query.search + '%'),
             },
           ]
         : undefined,
@@ -71,13 +71,13 @@ export class OtherService {
       where: !!query.search
         ? [
             {
-              name: ILike('%' + query.search + '%'),
+              name: ILike(query.search + '%'),
             },
             {
-              from: ILike('%' + query.search + '%'),
+              from: ILike(query.search + '%'),
             },
             {
-              subject: ILike('%' + query.search + '%'),
+              subject: ILike(query.search + '%'),
             },
           ]
         : undefined,
@@ -180,7 +180,7 @@ export class OtherService {
       const whereCondition = new Brackets((sub) => {
         const query = `LOWER(doctor.name) LIKE LOWER(:name) OR LOWER(doctor.position) LIKE LOWER(:name)`;
         return sub.where(query, {
-          name: `%${data.name}%`,
+          name: `${data.name}%`,
         });
       });
 

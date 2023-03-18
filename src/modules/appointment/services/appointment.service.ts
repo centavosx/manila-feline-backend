@@ -54,15 +54,15 @@ export class AppointmentService {
     const appointment = await this.appointmentRepository.find({
       where: [
         {
-          name: !!data.search ? ILike('%' + data.search + '%') : undefined,
+          name: !!data.search ? ILike(data.search + '%') : undefined,
           ...searchData,
         },
         {
-          email: !!data.search ? ILike('%' + data.search + '%') : undefined,
+          email: !!data.search ? ILike(data.search + '%') : undefined,
           ...searchData,
         },
         {
-          refId: !!data.search ? ILike('%' + data.search + '%') : undefined,
+          refId: !!data.search ? ILike(data.search + '%') : undefined,
           ...searchData,
         },
       ],
@@ -77,15 +77,15 @@ export class AppointmentService {
     const total = await this.appointmentRepository.count({
       where: [
         {
-          name: !!data.search ? ILike('%' + data.search + '%') : undefined,
+          name: !!data.search ? ILike(data.search + '%') : undefined,
           ...searchData,
         },
         {
-          email: !!data.search ? ILike('%' + data.search + '%') : undefined,
+          email: !!data.search ? ILike(data.search + '%') : undefined,
           ...searchData,
         },
         {
-          refId: !!data.search ? ILike('%' + data.search + '%') : undefined,
+          refId: !!data.search ? ILike(data.search + '%') : undefined,
           ...searchData,
         },
       ],
