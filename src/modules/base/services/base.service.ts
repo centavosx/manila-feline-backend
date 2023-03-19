@@ -467,17 +467,26 @@ export class BaseService {
     return;
   }
 
-  public async updateUsers({ id, name, position, description }: UserInfoDto) {
+  public async updateUsers({
+    id,
+    name,
+    position,
+    description,
+    password,
+  }: UserInfoDto) {
     const userData = await this.userRepository.findOne({
       where: {
         id,
       },
     });
 
-    userData.name = name;
+    if (!!name) userData.name = name;
 
-    userData.position = position;
-    userData.description = description;
+    if (!!position) userData.position = position;
+
+    if (!!description) userData.description = description;
+
+    if (!!password) userData.password = await hashPassword(password);
 
     await this.userRepository.save(userData);
 

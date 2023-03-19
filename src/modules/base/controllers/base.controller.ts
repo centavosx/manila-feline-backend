@@ -166,6 +166,7 @@ export class BaseController {
     return await this.baseService.resetToken(user, token, dto);
   }
 
+  @Roles(RoleTypes.ADMIN)
   @Patch('/update-users')
   public async updateUsersData(@Body() users: UserInfoDto) {
     return await this.baseService.updateUsers(users);

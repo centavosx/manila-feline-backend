@@ -18,4 +18,8 @@ export class UserInfoDto {
   @ApiPropertyOptional()
   @IsOptional()
   description: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  password: string;
 }
