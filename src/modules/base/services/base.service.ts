@@ -473,6 +473,7 @@ export class BaseService {
     position,
     description,
     password,
+    old,
   }: UserInfoDto) {
     const userData = await this.userRepository.findOne({
       where: {
@@ -480,11 +481,16 @@ export class BaseService {
       },
     });
 
+    if (!userData) throw new NotFoundException();
+
     if (!!name) userData.name = name;
 
     if (!!position) userData.position = position;
 
     if (!!description) userData.description = description;
+
+    if (!!old && !(await ifMatched(old, userData.password)))
+      throw new BadRequestException('Wrong old password');
 
     if (!!password) userData.password = await hashPassword(password);
 

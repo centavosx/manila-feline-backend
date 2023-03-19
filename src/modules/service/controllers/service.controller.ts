@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Query, Body } from '@nestjs/common';
+import { Controller, Get, Post, Query, Body, Patch } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
 import { Roles } from '../../../decorators/roles.decorator';
@@ -6,7 +6,7 @@ import { Roles } from '../../../decorators/roles.decorator';
 import { ServiceService } from '../services';
 import { Roles as RoleTypes } from '../../../enum';
 
-import { CreateServiceDto, SearchServiceDto } from '../dto';
+import { CreateServiceDto, SearchServiceDto, UpdateServiceDto } from '../dto';
 import { DeleteDto } from '../../base/dto';
 
 @ApiTags('service')
@@ -35,5 +35,11 @@ export class ServiceController {
   @Get('search')
   public async getService(@Query() queryParameters: SearchServiceDto) {
     return await this.serviceService.getService(queryParameters);
+  }
+
+  @Roles(RoleTypes.ADMIN)
+  @Patch()
+  public async updateService(@Body() data: UpdateServiceDto) {
+    return await this.serviceService.updateService(data);
   }
 }

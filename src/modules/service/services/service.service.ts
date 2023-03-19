@@ -7,7 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Services } from '../../../entities';
 import { DataSource, ILike, Repository } from 'typeorm';
 
-import { CreateServiceDto, SearchServiceDto } from '../dto';
+import { CreateServiceDto, SearchServiceDto, UpdateServiceDto } from '../dto';
 import { DeleteDto, ResponseDto } from '../../base/dto';
 
 @Injectable()
@@ -67,5 +67,17 @@ export class ServiceService {
 
   public async deleteServices(data: DeleteDto) {
     return await this.serviceRepository.delete(data.ids);
+  }
+
+  public async updateService({ id, name, description }: UpdateServiceDto) {
+    const service = await this.serviceRepository.findOne({ where: { id } });
+    if (!service) throw new NotFoundException();
+
+    if (!!name) service.name = name;
+    if (!!description) service.description = description;
+
+    await this.serviceRepository.save(service);
+
+    return;
   }
 }

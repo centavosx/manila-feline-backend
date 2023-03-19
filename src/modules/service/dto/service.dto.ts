@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
-import { IsString, IsOptional, IsInt } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class CreateServiceDto {
   @ApiProperty()
@@ -9,5 +8,21 @@ export class CreateServiceDto {
 
   @ApiProperty()
   @IsString()
-  description: number;
+  description: string;
+}
+
+export class UpdateServiceDto {
+  @ApiProperty()
+  @IsString()
+  id: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  name: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  description: string;
 }

@@ -22,4 +22,8 @@ export class UserInfoDto {
   @ApiPropertyOptional()
   @IsOptional()
   password: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  old: string;
 }
