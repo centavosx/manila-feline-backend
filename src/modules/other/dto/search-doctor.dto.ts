@@ -41,11 +41,11 @@ export class SearchDoctorDto {
   // @IsUUID()
   serviceId?: string;
 
-  @ApiProperty()
-  @IsNotEmpty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsEnum(AmOrPm)
   @IsString()
-  time: AmOrPm;
+  time?: AmOrPm;
 
   @ApiPropertyOptional()
   @IsOptional()

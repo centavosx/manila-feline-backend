@@ -249,6 +249,10 @@ export class AppointmentService {
     appointment.email = data.email;
     appointment.name = data.name;
     appointment.time = data.time;
+    appointment.age = data.age ? Number(data.age) : null;
+    appointment.birthDate = data.birthDate;
+    appointment.petName = data.petName;
+    appointment.gender = data.gender;
     appointment.refId = (
       new Date().getTime().toString(36) + Math.random().toString(36).slice(8)
     ).toUpperCase();

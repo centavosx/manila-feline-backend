@@ -5,11 +5,13 @@ import {
   IsEmail,
   IsEnum,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
+  Min,
 } from 'class-validator';
-import { AmOrPm } from '../../../entities';
+import { AmOrPm, Gender } from '../../../entities';
 
 export class CreateAppointmentDto {
   @ApiProperty()
@@ -33,6 +35,28 @@ export class CreateAppointmentDto {
   @IsDate()
   @Type(() => Date)
   date: Date;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  petName: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  birthDate: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsNumber()
+  @Min(0)
+  age: number;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  @IsEnum(Gender)
+  gender: Gender;
 
   @ApiProperty()
   @IsNotEmpty()

@@ -23,6 +23,11 @@ export enum AmOrPm {
   PM = 'PM',
 }
 
+export enum Gender {
+  male = 'MALE',
+  female = 'FEMALE',
+}
+
 @Entity()
 export class Appointment {
   @PrimaryGeneratedColumn('uuid')
@@ -41,6 +46,18 @@ export class Appointment {
 
   @Column()
   message: string;
+
+  @Column({ nullable: true })
+  petName: string | null;
+
+  @Column({ nullable: true })
+  birthDate: string | null;
+
+  @Column({ nullable: true })
+  age: number | null;
+
+  @Column({ nullable: true })
+  gender: Gender | null;
 
   @Column({ nullable: true })
   date: Date;
