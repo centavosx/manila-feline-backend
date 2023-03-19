@@ -106,11 +106,24 @@ export class BaseService {
     };
   }
 
-  public async getUser(id: string | undefined, email?: string) {
+  public async getUser(
+    id: string | undefined,
+    email?: string,
+    roleName?: Roles,
+  ) {
+    let role;
+
+    if (!!roleName) {
+      role = await this.roleRepository.findOne({
+        where: { name: roleName },
+      });
+    }
+
     const data = await this.userRepository.findOne({
       where: {
         id: id,
         email: email,
+        roles: !!roleName ? [role] : undefined,
       },
     });
     if (!!data) return data;

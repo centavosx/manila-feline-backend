@@ -130,7 +130,7 @@ export class BaseController {
   @Roles(RoleTypes.ADMIN)
   @Get('search')
   public async searchUser(@Query() search: SearchSingle) {
-    return await this.baseService.getUser(undefined, search.email);
+    return await this.baseService.getUser(undefined, search.email, search.role);
   }
 
   @Roles(RoleTypes.ADMIN)
