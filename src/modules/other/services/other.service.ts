@@ -308,6 +308,10 @@ export class OtherService {
     newAppointment.name = data.name;
     newAppointment.time = data.time;
     newAppointment.date = new Date(data.date);
+    newAppointment.age = data.age ? Number(data.age) : null;
+    newAppointment.birthDate = data.birthDate;
+    newAppointment.petName = data.petName;
+    newAppointment.gender = data.gender;
     newAppointment.refId = (
       new Date().getTime().toString(36) + Math.random().toString(36).slice(8)
     ).toUpperCase();
