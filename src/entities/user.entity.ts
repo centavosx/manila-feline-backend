@@ -14,6 +14,8 @@ import { Role } from './role.entity';
 import { Availability } from './availability.entity';
 import { Services } from './services.entity';
 import { Appointment } from './appointment.entity';
+import { UserTransaction } from './user_transaction.entity';
+import { UserPayment } from './user_payment.entity';
 
 @Entity()
 export class User {
@@ -76,6 +78,14 @@ export class User {
   @Exclude()
   @OneToMany(() => Appointment, (appointment) => appointment.doctor)
   appointment: Appointment[];
+
+  @Exclude()
+  @OneToMany(() => UserTransaction, (transaction) => transaction.user)
+  transactions: UserTransaction[];
+
+  @Exclude()
+  @OneToMany(() => UserPayment, (payments) => payments.user)
+  payments: UserPayment[];
 
   public hasAm?: boolean;
   public hasPm?: boolean;

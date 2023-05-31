@@ -9,6 +9,9 @@ import {
   Role,
   Services,
   Availability,
+  UserTransaction,
+  UserPayment,
+  Product,
 } from '../entities';
 
 dotenv.config();
@@ -29,6 +32,9 @@ export const dataSourceOptions: DataSourceOptions = {
     Role,
     Services,
     Availability,
+    UserTransaction,
+    UserPayment,
+    Product,
   ],
   migrations: ['dist/migrations/*.js'],
 };

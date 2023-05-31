@@ -6,3 +6,6 @@ export * from './user.entity';
 export * from './services.entity';
 export * from './contact_us.entity';
 export * from './replies.entity';
+export * from './product.entity';
+export * from './user_payment.entity';
+export * from './user_transaction.entity';
