@@ -19,6 +19,7 @@ import {
   SearchDoctorDto,
   CreateAppointmentDto,
   VerifyAppointmentDto,
+  GetAvailabilityDto,
 } from '../dto';
 import { OtherService } from '../services/other.service';
 import { Roles as RoleTypes } from '../../../enum';
@@ -116,5 +117,10 @@ export class OtherController {
     id: string,
   ) {
     return await this.otherService.refreshVerification(id);
+  }
+
+  @Get('availabilities')
+  public async getAvailabilities(@Query() { timeZone }: GetAvailabilityDto) {
+    return await this.otherService.getAvailableDates(timeZone);
   }
 }

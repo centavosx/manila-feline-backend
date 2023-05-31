@@ -11,6 +11,7 @@ import {
   Replies,
   Role,
   Services,
+  Status,
   User,
 } from '../../../entities';
 import { Brackets, DataSource, ILike, Repository } from 'typeorm';
@@ -26,6 +27,8 @@ import {
 import { MailService } from '../../../mail/mail.service';
 import { DeleteDto, ResponseDto, SearchUserDto } from '../../base/dto';
 import { Roles } from '../../../enum';
+
+import { endOfMonth, format, startOfMonth } from 'date-fns';
 
 @Injectable()
 export class OtherService {
@@ -390,5 +393,77 @@ export class OtherService {
     delete savedData.verification;
 
     return savedData;
+  }
+
+  private beginingOfDay(options: { date: Date; timeZone: string }) {
+    const { date = new Date(), timeZone } = options;
+    const parts = Intl.DateTimeFormat('en-US', {
+      timeZone,
+      hourCycle: 'h23',
+      hour: 'numeric',
+      minute: 'numeric',
+      second: 'numeric',
+    }).formatToParts(date);
+    const hour = parseInt(parts.find((i) => i.type === 'hour').value);
+    const minute = parseInt(parts.find((i) => i.type === 'minute').value);
+    const second = parseInt(parts.find((i) => i.type === 'second').value);
+    return new Date(
+      1000 *
+        Math.floor(
+          (date.getTime() - hour * 3600000 - minute * 60000 - second * 1000) /
+            1000,
+        ),
+    );
+  }
+
+  private endOfDay(options: { date: Date; timeZone: string }) {
+    return new Date(this.beginingOfDay(options).getTime() + 86399999);
+  }
+
+  private getStartAndEnd(timeZone: string) {
+    return {
+      startAt: format(
+        this.beginingOfDay({ date: startOfMonth(new Date()), timeZone }),
+        'YYYY-MM-DD HH:mm:ss',
+      ),
+      endAt: format(
+        this.endOfDay({ date: endOfMonth(new Date()), timeZone }),
+        'YYYY-MM-DD HH:mm:ss',
+      ),
+    };
+  }
+
+  private async getNotAvailabilityStatus(
+    startAt: string,
+    endAt: string,
+    status: string,
+    timeZone: string,
+  ): Promise<
+    {
+      date: string;
+    }[]
+  > {
+    return await this.appointmentRepository.query(
+      `
+      SELECT TO_CHAR(timezone(?, "startDate"), 'yyyy-mm-dd hh24') as date as count FROM appointment 
+        WHERE "startDate" >= timezone(current_setting('TIMEZONE'), ?) AND "endDate" <= timezone(current_setting('TIMEZONE'), ?) 
+          AND status = ? AND ("startDate" IS NOT NULL OR "endDate" IS NOT NULL)
+        GROUP BY TO_CHAR(timezone(?, "startDate"), 'yyyy-mm-dd hh24')
+    `,
+      [timeZone, startAt, endAt, status, timeZone],
+    );
+  }
+
+  public async getAvailableDates(timeZone: string) {
+    const { startAt, endAt } = this.getStartAndEnd(timeZone);
+
+    const dates = await this.getNotAvailabilityStatus(
+      startAt,
+      endAt,
+      Status.accepted,
+      timeZone,
+    );
+
+    return dates;
   }
 }
