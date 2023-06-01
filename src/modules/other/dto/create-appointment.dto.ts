@@ -75,4 +75,9 @@ export class VerifyAppointmentDto {
   @IsNotEmpty()
   @IsString()
   verification: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  timeZone: string;
 }

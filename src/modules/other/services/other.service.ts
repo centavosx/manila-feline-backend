@@ -2,6 +2,8 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ConflictException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -13,6 +15,7 @@ import {
   Services,
   Status,
   User,
+  UserPayment,
 } from '../../../entities';
 import { Brackets, DataSource, ILike, Repository } from 'typeorm';
 
@@ -28,7 +31,14 @@ import { MailService } from '../../../mail/mail.service';
 import { DeleteDto, ResponseDto, SearchUserDto } from '../../base/dto';
 import { Roles } from '../../../enum';
 
-import { endOfMonth, format, startOfMonth } from 'date-fns';
+import {
+  addHours,
+  addMonths,
+  endOfMonth,
+  format,
+  startOfMonth,
+} from 'date-fns';
+import { Paypal, getPaymentInfo } from '../../../paypal';
 
 @Injectable()
 export class OtherService {
@@ -48,6 +58,9 @@ export class OtherService {
     private readonly replyRepository: Repository<Replies>,
     @InjectRepository(Appointment)
     private readonly appointmentRepository: Repository<Appointment>,
+    @InjectRepository(UserPayment)
+    private readonly userPayment: Repository<UserPayment>,
+
     private readonly mailService: MailService,
   ) {}
 
@@ -273,29 +286,7 @@ export class OtherService {
     return doctor;
   }
 
-  public async setAppointment(id: string, data: CreateAppointmentDto) {
-    const doctor = this.userRepository
-      .createQueryBuilder('doctor')
-      .leftJoinAndSelect('doctor.availability', 'availability')
-      .leftJoinAndSelect('doctor.services', 'services')
-      .leftJoinAndSelect('doctor.roles', 'roles');
-
-    const mainWhereCondition = new Brackets((sub) => {
-      const query = `(doctor.id = :id AND roles.name = :role AND services.id = :serviceId) AND (TO_CHAR(availability.startDate + interval '8 hours', 'hh12:mi AM') LIKE :time OR TO_CHAR(availability.endDate + interval '8 hours', 'hh12:mi AM') LIKE :time)`;
-      return sub.where(query, {
-        id,
-        role: Roles.DOCTOR,
-        time: `%${data.time}%`,
-        serviceId: data.serviceId,
-      });
-    });
-
-    doctor.andWhere(mainWhereCondition);
-
-    const doctorData = await doctor.getOne();
-
-    if (!doctorData) throw new NotFoundException('Doctor not found');
-
+  public async setAppointment(data: CreateAppointmentDto, timeZone: string) {
     const service = await this.serviceRepository.findOne({
       where: { id: data.serviceId },
     });
@@ -304,41 +295,63 @@ export class OtherService {
 
     const newAppointment = new Appointment();
 
-    newAppointment.doctor = doctorData;
-    newAppointment.service = service;
-    newAppointment.email = data.email;
-    newAppointment.message = data.message;
-    newAppointment.name = data.name;
-    newAppointment.time = data.time;
-    newAppointment.date = new Date(data.date);
-    newAppointment.age = data.age ? Number(data.age) : null;
-    newAppointment.birthDate = data.birthDate;
-    newAppointment.petName = data.petName;
-    newAppointment.gender = data.gender;
-    newAppointment.refId = (
-      new Date().getTime().toString(36) + Math.random().toString(36).slice(8)
-    ).toUpperCase();
-    newAppointment.verification = Math.random()
-      .toString(36)
-      .slice(2)
-      .toUpperCase();
+    const startDate = new Date(data.date);
+    const endDate = addHours(startDate, 1);
 
-    const savedData = await this.appointmentRepository.save(newAppointment);
+    const start = this.beginingOfDay({
+      date: startOfMonth(startDate),
+      timeZone,
+    });
+    const end = addHours(start, 1);
 
-    await this.mailService.sendMail(
-      savedData.email,
-      'Please verify your appointment',
-      'verification',
-      {
-        name: savedData.name,
-        code: savedData.verification,
-      },
+    const dates = await this.getNotAvailabilityStatus(
+      format(start, 'yyyy-MM-dd HH:mm:ss'),
+      format(end, 'yyyy-MM-dd HH:mm:ss'),
+      Status.accepted,
+      timeZone,
     );
 
-    delete savedData.refId;
-    delete savedData.verification;
+    if (dates.length === 0) {
+      newAppointment.service = service;
+      newAppointment.email = data.email;
+      newAppointment.message = data.message;
+      newAppointment.name = data.name;
+      newAppointment.time = data.time;
+      newAppointment.date = startDate;
+      newAppointment.startDate = startDate;
+      newAppointment.endDate = endDate;
+      newAppointment.birthDate = data.birthDate;
+      newAppointment.petName = data.petName;
+      newAppointment.gender = data.gender;
+      newAppointment.refId = (
+        new Date().getTime().toString(36) + Math.random().toString(36).slice(8)
+      ).toUpperCase();
+      newAppointment.verification = Math.random()
+        .toString(36)
+        .slice(2)
+        .toUpperCase();
 
-    return savedData;
+      const savedData = await this.appointmentRepository.save(newAppointment);
+
+      try {
+        await this.mailService.sendMail(
+          savedData.email,
+          'Please verify your appointment',
+          'verification',
+          {
+            name: savedData.name,
+            code: savedData.verification,
+          },
+        );
+      } catch {}
+
+      delete savedData.refId;
+      delete savedData.verification;
+
+      return savedData;
+    }
+
+    throw new ConflictException('Date conflicted');
   }
 
   public async verifyAppointment(id: string, data: VerifyAppointmentDto) {
@@ -350,6 +363,7 @@ export class OtherService {
 
     if (appointment.verification === data.verification) {
       appointment.verification = null;
+      await this.appointmentRepository.save(appointment);
       await this.mailService.sendMail(
         appointment.email,
         'Your booking is now verified',
@@ -359,10 +373,108 @@ export class OtherService {
           code: appointment.refId,
         },
       );
-      return await this.appointmentRepository.save(appointment);
+
+      const paypal = new Paypal({
+        items: [
+          {
+            name: 'downpayment',
+            sku: appointment.id,
+            price: '100',
+            currency: 'PHP',
+            quantity: 1,
+          },
+        ],
+        currency: 'PHP',
+        price: '100',
+        successUrl: process.env.API_URL + 'other/transactions/success',
+        cancelledUrl: process.env.API_URL + 'other/transactions/canceled',
+        description: 'downpayment',
+        state: data.timeZone,
+      });
+
+      const link = (await paypal.create().pay()).link;
+
+      return link;
     }
 
     throw new BadRequestException('Invalid verification code');
+  }
+
+  public async successTransaction(
+    payerId: string,
+    paymentId: string,
+    isSuccess: boolean,
+  ) {
+    const { id, transactions } = await getPaymentInfo(payerId, paymentId);
+    const check = await this.userPayment.find({
+      where: {
+        paypalId: id,
+      },
+    });
+
+    if (check.length > 0) throw new ForbiddenException();
+
+    const descr = transactions[0].description.split(', State=');
+
+    const isDown = descr[0] === 'downpayment';
+
+    const payments: UserPayment[] = [];
+
+    for (const i of transactions[0].item_list.items) {
+      const uPay = new UserPayment();
+
+      uPay.paypalId = id;
+      uPay.refId = transactions[0].reference_id;
+      uPay.status = isSuccess ? 'PAID' : 'CANCELED';
+      if (i.name === 'downpayment' && isDown) {
+        uPay.appointmentId = i.sku;
+        const appointment = await this.appointmentRepository.findOne({
+          where: { id: i.sku },
+          relations: ['service'],
+        });
+
+        if (!!appointment) {
+          appointment.status = Status.accepted;
+          const updated = await this.appointmentRepository.save(appointment);
+          const start = new Date(
+            new Date(updated.startDate).toLocaleString('en-US', {
+              timeZone: descr[1],
+            }),
+          );
+          const end = new Date(
+            new Date(updated.endDate).toLocaleString('en-US', {
+              timeZone: descr[1],
+            }),
+          );
+          await this.mailService.sendMail(
+            appointment.email,
+            'Your booking is now approved!',
+            'appointment',
+            {
+              refId: updated.refId,
+              name: updated.name,
+              status: updated.status,
+              time:
+                !!updated.startDate && !!updated.endDate
+                  ? 'Time: ' +
+                    format(start, 'EEEE, LLLL do yyyy  hh:mm a') +
+                    ' to ' +
+                    format(end, 'EEEE, LLLL do yyyy  hh:mm a')
+                  : '',
+
+              service: appointment.service.name,
+              price: i.price,
+            },
+          );
+        }
+      } else {
+        uPay.transactionId = i.sku;
+      }
+
+      payments.push(uPay);
+    }
+
+    await this.userPayment.save(payments);
   }
 
   public async refreshVerification(id: string) {
@@ -416,20 +528,16 @@ export class OtherService {
     );
   }
 
-  private endOfDay(options: { date: Date; timeZone: string }) {
-    return new Date(this.beginingOfDay(options).getTime() + 86399999);
-  }
+  private getStartAndEnd(timeZone: string, month: number, year: number) {
+    const date = new Date();
+    date.setMonth(month);
+    date.setFullYear(year);
+    const start = this.beginingOfDay({ date: startOfMonth(date), timeZone });
+    const end = addMonths(start, 1);
 
-  private getStartAndEnd(timeZone: string) {
     return {
-      startAt: format(
-        this.beginingOfDay({ date: startOfMonth(new Date()), timeZone }),
-        'YYYY-MM-DD HH:mm:ss',
-      ),
-      endAt: format(
-        this.endOfDay({ date: endOfMonth(new Date()), timeZone }),
-        'YYYY-MM-DD HH:mm:ss',
-      ),
+      startAt: format(start, 'yyyy-MM-dd HH:mm:ss'),
+      endAt: format(end, 'yyyy-MM-dd HH:mm:ss'),
     };
   }
 
@@ -443,19 +551,32 @@ export class OtherService {
       date: string;
     }[]
   > {
-    return await this.appointmentRepository.query(
-      `
-      SELECT TO_CHAR(timezone(?, "startDate"), 'yyyy-mm-dd hh24') as date as count FROM appointment 
-        WHERE "startDate" >= timezone(current_setting('TIMEZONE'), ?) AND "endDate" <= timezone(current_setting('TIMEZONE'), ?) 
-          AND status = ? AND ("startDate" IS NOT NULL OR "endDate" IS NOT NULL)
-        GROUP BY TO_CHAR(timezone(?, "startDate"), 'yyyy-mm-dd hh24')
-    `,
-      [timeZone, startAt, endAt, status, timeZone],
-    );
+    return await this.appointmentRepository
+      .createQueryBuilder('appointment')
+      .select(
+        "TO_CHAR(timezone(:timeZone, appointment.startDate), 'yyyy-mm-dd hh24') as date",
+      )
+      .distinct(true)
+      .where(
+        `appointment.startDate >= timezone(current_setting('TIMEZONE'), :startAt) AND appointment.endDate <= timezone(current_setting('TIMEZONE'), :endAt) 
+          AND status = :status AND (appointment.startDate IS NOT NULL OR appointment.endDate IS NOT NULL) AND appointment.verification IS NULL`,
+      )
+      .groupBy('appointment.startDate')
+      .setParameters({
+        status,
+        timeZone,
+        startAt,
+        endAt,
+      })
+      .getRawMany();
   }
 
-  public async getAvailableDates(timeZone: string) {
-    const { startAt, endAt } = this.getStartAndEnd(timeZone);
+  public async getUnAvailableDates(
+    timeZone: string,
+    month: number,
+    year: number,
+  ) {
+    const { startAt, endAt } = this.getStartAndEnd(timeZone, month, year);
 
     const dates = await this.getNotAvailabilityStatus(
       startAt,

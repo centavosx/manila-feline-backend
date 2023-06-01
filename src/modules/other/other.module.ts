@@ -11,6 +11,7 @@ import {
   Availability,
   ContactUs,
   Appointment,
+  UserPayment,
 } from '../../entities';
 import { OtherController } from './controllers';
 import { OtherService } from './services';
@@ -26,6 +27,7 @@ import { OtherService } from './services';
       ContactUs,
       Replies,
       Appointment,
+      UserPayment,
     ]),
   ],
   controllers: [OtherController],

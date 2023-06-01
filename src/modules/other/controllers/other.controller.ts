@@ -8,6 +8,8 @@ import {
   Query,
   Body,
   Put,
+  ForbiddenException,
+  Res,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Param } from '@nestjs/common/decorators';
@@ -20,11 +22,14 @@ import {
   CreateAppointmentDto,
   VerifyAppointmentDto,
   GetAvailabilityDto,
+  TimezoneDto,
+  PaypalDto,
 } from '../dto';
 import { OtherService } from '../services/other.service';
 import { Roles as RoleTypes } from '../../../enum';
 import { Parameter } from '../../../helpers';
 import { MailService } from '../../../mail/mail.service';
+import { Response } from 'express';
 
 import { SearchUserDto, DeleteDto } from '../../base/dto';
 
@@ -91,14 +96,13 @@ export class OtherController {
     );
   }
 
-  @Post('doctor/' + Parameter.id() + '/set-an-appoinment')
+  @Post('/set-an-appoinment')
   public async setAppointment(
-    @Param('id')
-    id: string,
+    @Query() query: TimezoneDto,
     @Body()
     data: CreateAppointmentDto,
   ) {
-    return await this.otherService.setAppointment(id, data);
+    return await this.otherService.setAppointment(data, query.timeZone);
   }
 
   @Patch('verify/' + Parameter.id())
@@ -119,8 +123,28 @@ export class OtherController {
     return await this.otherService.refreshVerification(id);
   }
 
-  @Get('availabilities')
-  public async getAvailabilities(@Query() { timeZone }: GetAvailabilityDto) {
-    return await this.otherService.getAvailableDates(timeZone);
+  @Get('unavailable')
+  public async getAvailabilities(
+    @Query() { timeZone, month, year }: GetAvailabilityDto,
+  ) {
+    return await this.otherService.getUnAvailableDates(timeZone, month, year);
+  }
+
+  @Get('transactions/success')
+  public async successT(
+    @Res() res: Response,
+    @Query() { paymentId, PayerID }: PaypalDto,
+  ) {
+    await this.otherService.successTransaction(PayerID, paymentId, true);
+    return res.redirect(process.env.MAIN_URL);
+  }
+
+  @Get('transactions/canceled')
+  public async canceledT(
+    @Res() res: Response,
+    @Query() { paymentId, PayerID }: PaypalDto,
+  ) {
+    await this.otherService.successTransaction(PayerID, paymentId, false);
+    return res.render('Canceled');
   }
 }

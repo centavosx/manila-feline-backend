@@ -7,6 +7,7 @@ import {
   Column,
   DeleteDateColumn,
   UpdateDateColumn,
+  OneToOne,
 } from 'typeorm';
 
 import { Appointment, User } from '.';
@@ -16,6 +17,12 @@ import { UserTransaction } from './user_transaction.entity';
 export class UserPayment {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column({ nullable: false })
+  paypalId: string;
+
+  @Column({ nullable: true })
+  refId: string | null;
 
   @Column({ nullable: false })
   status: 'PAID' | 'PENDING' | 'CANCELED';
@@ -30,11 +37,11 @@ export class UserPayment {
   @JoinColumn({ name: 'userId' })
   user: User;
 
-  @ManyToOne(() => UserTransaction, (transaction) => transaction)
+  @OneToOne(() => UserTransaction, (transaction) => transaction)
   @JoinColumn({ name: 'transactionId' })
   transaction: UserTransaction | null;
 
-  @ManyToOne(() => Appointment, (appointment) => appointment)
+  @OneToOne(() => Appointment, (appointment) => appointment)
   @JoinColumn({ name: 'appointmentId' })
   appointment: Appointment | null;
 
