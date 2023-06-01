@@ -10,6 +10,7 @@ import {
   Appointment,
   Availability,
   ContactUs,
+  Product,
   Replies,
   Role,
   Services,
@@ -59,6 +60,8 @@ export class OtherService {
     private readonly userPayment: Repository<UserPayment>,
     @InjectRepository(UserTransaction)
     private readonly userTransaction: Repository<UserTransaction>,
+    @InjectRepository(Product)
+    private readonly productRepo: Repository<Product>,
     private readonly mailService: MailService,
   ) {}
 
@@ -478,15 +481,16 @@ export class OtherService {
           );
         }
       } else {
-        if (!userT) {
-          const transaction = await this.userTransaction.findOne({
-            where: { id: i.sku },
-            relations: ['user'],
-          });
-          if (!!transaction) {
-            userT = transaction.user;
-          }
+        const transaction = await this.userTransaction.findOne({
+          where: { id: i.sku },
+          relations: !userT ? ['user', 'product'] : ['product'],
+        });
+        if (!!transaction) {
+          if (!!transaction.user) userT = transaction.user;
+          transaction.product.items -= i.quantity;
+          await this.productRepo.save(transaction.product);
         }
+
         uPay.user = userT;
         uPay.transactionId = i.sku;
       }
