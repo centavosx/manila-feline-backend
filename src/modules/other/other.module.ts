@@ -13,9 +13,11 @@ import {
   Appointment,
   UserPayment,
   UserTransaction,
+  Product,
+  ProductReview,
 } from '../../entities';
-import { OtherController } from './controllers';
-import { OtherService } from './services';
+import { OtherController, ProductController } from './controllers';
+import { OtherService, ProductService } from './services';
 
 @Module({
   imports: [
@@ -30,9 +32,11 @@ import { OtherService } from './services';
       Appointment,
       UserPayment,
       UserTransaction,
+      Product,
+      ProductReview,
     ]),
   ],
-  controllers: [OtherController],
-  providers: [OtherService, MailService],
+  controllers: [OtherController, ProductController],
+  providers: [OtherService, MailService, ProductService],
 })
 export class OtherModule {}

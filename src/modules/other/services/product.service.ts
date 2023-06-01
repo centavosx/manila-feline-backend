@@ -32,6 +32,7 @@ import {
   CreateAppointmentDto,
   CreateEmailDto,
   ReplyMailDto,
+  ReviewProductDto,
   SearchDoctorDto,
   SearchProductDto,
   VerifyAppointmentDto,
@@ -65,7 +66,7 @@ export class ProductService {
     @InjectRepository(Product)
     private readonly productRepo: Repository<Product>,
     @InjectRepository(ProductReview)
-    private readonly productReviewRepo: Repository<Product>,
+    private readonly productReviewRepo: Repository<ProductReview>,
     private readonly mailService: MailService,
   ) {}
 
@@ -102,5 +103,40 @@ export class ProductService {
     };
   }
 
-  public async reviewProduct(id: string) {}
+  public async getInfo(id: string) {
+    return await this.productRepo.findOneOrFail({
+      where: {
+        id,
+      },
+    });
+  }
+
+  public async reviewProduct(id: string, user: User, data: ReviewProductDto) {
+    const product = await this.productRepo.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!product) throw new NotFoundException('Product not found');
+
+    let productReview = await this.productReviewRepo.findOne({
+      where: {
+        user,
+        product,
+      },
+      relations: ['user', 'product'],
+    });
+
+    productReview = !!productReview ? productReview : new ProductReview();
+
+    productReview.comment = data.comment;
+    productReview.rating = data.rate;
+    productReview.product = product;
+    productReview.user = user;
+
+    await this.productReviewRepo.save(productReview);
+
+    return;
+  }
 }
