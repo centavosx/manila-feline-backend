@@ -16,6 +16,7 @@ import { Services } from './services.entity';
 import { Appointment } from './appointment.entity';
 import { UserTransaction } from './user_transaction.entity';
 import { UserPayment } from './user_payment.entity';
+import { ProductReview } from './product_reviews.entity';
 
 @Entity()
 export class User {
@@ -86,6 +87,10 @@ export class User {
   @Exclude()
   @OneToMany(() => UserPayment, (payments) => payments.user)
   payments: UserPayment[];
+
+  @Exclude()
+  @OneToMany(() => ProductReview, (review) => review.user)
+  userReviews: ProductReview[];
 
   public hasAm?: boolean;
   public hasPm?: boolean;

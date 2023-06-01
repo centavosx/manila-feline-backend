@@ -1,10 +1,13 @@
+import { Exclude } from 'class-transformer';
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
+import { ProductReview } from './product_reviews.entity';
 
 @Entity()
 export class Product {
@@ -19,6 +22,10 @@ export class Product {
 
   @Column({ nullable: false, default: 0 })
   items: number;
+
+  @Exclude()
+  @OneToMany(() => ProductReview, (review) => review.product)
+  reviews: ProductReview[];
 
   @CreateDateColumn()
   created: Date;
