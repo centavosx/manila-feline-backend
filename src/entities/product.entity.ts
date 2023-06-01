@@ -7,7 +7,7 @@ import {
   UpdateDateColumn,
   OneToMany,
 } from 'typeorm';
-import { ProductReview } from './product_reviews.entity';
+import { ProductReview } from './product_review.entity';
 
 @Entity()
 export class Product {

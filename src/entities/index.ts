@@ -9,3 +9,4 @@ export * from './replies.entity';
 export * from './product.entity';
 export * from './user_payment.entity';
 export * from './user_transaction.entity';
+export * from './product_review.entity';

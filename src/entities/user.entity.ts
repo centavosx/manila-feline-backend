@@ -16,7 +16,7 @@ import { Services } from './services.entity';
 import { Appointment } from './appointment.entity';
 import { UserTransaction } from './user_transaction.entity';
 import { UserPayment } from './user_payment.entity';
-import { ProductReview } from './product_reviews.entity';
+import { ProductReview } from './product_review.entity';
 
 @Entity()
 export class User {
