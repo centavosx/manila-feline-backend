@@ -96,6 +96,7 @@ export class OtherController {
     );
   }
 
+  @Roles(RoleTypes.USER)
   @Post('/set-an-appoinment')
   public async setAppointment(
     @Query() query: TimezoneDto,
@@ -105,6 +106,7 @@ export class OtherController {
     return await this.otherService.setAppointment(data, query.timeZone);
   }
 
+  @Roles(RoleTypes.USER)
   @Patch('verify/' + Parameter.id())
   public async verifyAppointment(
     @Param('id')
@@ -115,6 +117,7 @@ export class OtherController {
     return await this.otherService.verifyAppointment(id, data);
   }
 
+  @Roles(RoleTypes.USER)
   @Patch('refresh/' + Parameter.id())
   public async refreshAppointment(
     @Param('id')
