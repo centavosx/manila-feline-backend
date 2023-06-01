@@ -16,6 +16,7 @@ import {
   Status,
   User,
   UserPayment,
+  UserTransaction,
 } from '../../../entities';
 import { Brackets, DataSource, ILike, Repository } from 'typeorm';
 
@@ -46,12 +47,8 @@ export class OtherService {
     private readonly dataSource: DataSource,
     @InjectRepository(User) private readonly userRepository: Repository<User>,
 
-    @InjectRepository(Role)
-    private readonly roleRepository: Repository<Role>,
     @InjectRepository(Services)
     private readonly serviceRepository: Repository<Services>,
-    @InjectRepository(Availability)
-    private readonly availabilityRepository: Repository<Availability>,
     @InjectRepository(ContactUs)
     private readonly contactRepository: Repository<ContactUs>,
     @InjectRepository(Replies)
@@ -60,7 +57,8 @@ export class OtherService {
     private readonly appointmentRepository: Repository<Appointment>,
     @InjectRepository(UserPayment)
     private readonly userPayment: Repository<UserPayment>,
-
+    @InjectRepository(UserTransaction)
+    private readonly userTransaction: Repository<UserTransaction>,
     private readonly mailService: MailService,
   ) {}
 
@@ -420,6 +418,8 @@ export class OtherService {
 
     const payments: UserPayment[] = [];
 
+    let userT: User;
+
     for (const i of transactions[0].item_list.items) {
       const uPay = new UserPayment();
 
@@ -434,6 +434,16 @@ export class OtherService {
         });
 
         if (!!appointment) {
+          if (!userT) {
+            const user = await this.userRepository.findOne({
+              where: {
+                email: appointment.email,
+              },
+            });
+            if (!!user) userT = user;
+          }
+
+          uPay.user = userT;
           appointment.status = Status.accepted;
           const updated = await this.appointmentRepository.save(appointment);
           const start = new Date(
@@ -468,6 +478,16 @@ export class OtherService {
           );
         }
       } else {
+        if (!userT) {
+          const transaction = await this.userTransaction.findOne({
+            where: { id: i.sku },
+            relations: ['user'],
+          });
+          if (!!transaction) {
+            userT = transaction.user;
+          }
+        }
+        uPay.user = userT;
         uPay.transactionId = i.sku;
       }
 
