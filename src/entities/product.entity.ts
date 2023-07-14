@@ -8,6 +8,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { ProductReview } from './product_review.entity';
+import { ProductImages } from './product_images.entity';
 
 @Entity()
 export class Product {
@@ -17,11 +18,20 @@ export class Product {
   @Column({ nullable: false })
   name: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: false, name: 'short_description' })
+  shortDescription: string;
+
+  @Column({ nullable: false })
   description: string;
+
+  @Column({ nullable: false })
+  category: string;
 
   @Column({ nullable: false, default: 0 })
   items: number;
+
+  @OneToMany(() => ProductReview, (images) => images.product)
+  images: ProductImages[];
 
   @Exclude()
   @OneToMany(() => ProductReview, (review) => review.product)

@@ -425,9 +425,8 @@ export class OtherService {
 
     for (const i of transactions[0].item_list.items) {
       const uPay = new UserPayment();
-
       uPay.paypalId = id;
-      uPay.refId = transactions[0].reference_id;
+      uPay.refId = transactions[0].related_resources[0].sale.id;
       uPay.status = isSuccess ? 'PAID' : 'CANCELED';
       if (i.name === 'downpayment' && isDown) {
         uPay.appointmentId = i.sku;
