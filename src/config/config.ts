@@ -13,6 +13,7 @@ import {
   UserPayment,
   Product,
   ProductReview,
+  ProductImages,
 } from '../entities';
 
 dotenv.config();
@@ -37,6 +38,7 @@ export const dataSourceOptions: DataSourceOptions = {
     UserPayment,
     Product,
     ProductReview,
+    ProductImages,
   ],
   migrations: ['dist/migrations/*.js'],
 };

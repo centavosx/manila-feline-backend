@@ -30,11 +30,10 @@ export class Product {
   @Column({ nullable: false, default: 0 })
   items: number;
 
-  @OneToMany(() => ProductReview, (images) => images.product)
+  @OneToMany(() => ProductImages, (images) => images.product)
   images: ProductImages[];
 
-  @Exclude()
-  @OneToMany(() => ProductReview, (review) => review.product)
+  @OneToMany(() => ProductReview, (review) => review.product, { eager: false })
   reviews: ProductReview[];
 
   @CreateDateColumn()

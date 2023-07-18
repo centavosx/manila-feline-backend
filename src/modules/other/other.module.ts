@@ -15,6 +15,7 @@ import {
   UserTransaction,
   Product,
   ProductReview,
+  ProductImages,
 } from '../../entities';
 import { OtherController, ProductController } from './controllers';
 import { OtherService, ProductService } from './services';
@@ -34,6 +35,7 @@ import { OtherService, ProductService } from './services';
       UserTransaction,
       Product,
       ProductReview,
+      ProductImages,
     ]),
   ],
   controllers: [OtherController, ProductController],

@@ -16,6 +16,9 @@ export class ProductImages {
   @Column({ nullable: false })
   link: string;
 
+  @Column({ nullable: false })
+  pos: 'first' | 'second' | 'third';
+
   @ManyToOne(() => Product, (product) => product.images)
   @JoinColumn({ name: 'productId' })
   product: Product;

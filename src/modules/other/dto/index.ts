@@ -7,3 +7,4 @@ export * from './timezone.dto';
 export * from './paypal.dto';
 export * from './search-product.dto';
 export * from './review-product.dto';
+export * from './create-product.dto';
