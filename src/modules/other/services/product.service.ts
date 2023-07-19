@@ -138,6 +138,11 @@ export class ProductService {
       copy.where('name LIKE :name');
     }
 
+    if (!!query.category) {
+      q.where('category = :category');
+      copy.where('category = :category');
+    }
+
     q.skip((query.page ?? 0) * (query.limit ?? 20)).take(query.limit ?? 20);
     if (!!query.sort)
       q.orderBy(
@@ -146,9 +151,11 @@ export class ProductService {
       );
     q.setParameters({
       name: query.search + '%',
+      category: query.category,
     });
     copy.setParameters({
       name: query.search + '%',
+      category: query.category,
     });
     return {
       data: await q.getRawMany(),

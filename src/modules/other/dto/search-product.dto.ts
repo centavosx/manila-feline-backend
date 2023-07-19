@@ -30,4 +30,9 @@ export class SearchProductDto {
   @IsOptional()
   @IsString()
   sort?: FindOptionsOrderValue;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  category?: string;
 }

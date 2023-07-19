@@ -15,15 +15,6 @@ import { ApiTags } from '@nestjs/swagger';
 import { Param } from '@nestjs/common/decorators';
 import { Roles } from '../../../decorators/roles.decorator';
 import {
-  CreateEmailDto,
-  DateDto,
-  ReplyMailDto,
-  SearchDoctorDto,
-  CreateAppointmentDto,
-  VerifyAppointmentDto,
-  GetAvailabilityDto,
-  TimezoneDto,
-  PaypalDto,
   SearchProductDto,
   ReviewProductDto,
   ProductDto,
