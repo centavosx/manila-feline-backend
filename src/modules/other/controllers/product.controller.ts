@@ -52,6 +52,11 @@ export class ProductController {
     return await this.productService.getInfo(id);
   }
 
+  @Get('recommended')
+  public async getRecommended() {
+    return await this.productService.getRecommended();
+  }
+
   // @Roles(RoleTypes.USER, RoleTypes.ADMIN)
   @Get(Parameter.id() + '/review')
   public async getProductReview(@Param('id') id: string) {

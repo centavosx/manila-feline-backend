@@ -1,6 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsString, IsInt, IsNotEmpty, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsNumber,
+} from 'class-validator';
 
 const isInteger = (value: any): boolean => /^\+?(0|[1-9]\d*)$/.test(value);
 const toNumber = (value: any): number => {
@@ -48,6 +54,11 @@ export class ProductDto {
   @Transform(toNumber)
   @IsInt()
   items: number;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsNumber()
+  price: number;
 }
 
 export class UpdateProductDto {
@@ -91,4 +102,9 @@ export class UpdateProductDto {
   @Transform(toNumber)
   @IsInt()
   items: number;
+
+  @ApiPropertyOptional()
+  @ApiPropertyOptional()
+  @IsNumber()
+  price: number;
 }

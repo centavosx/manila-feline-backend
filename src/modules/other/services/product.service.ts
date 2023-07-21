@@ -80,7 +80,7 @@ export class ProductService {
     const q = this.productRepo
       .createQueryBuilder('product')
       .select([
-        'id',
+        '"product".id',
         'name',
         'description',
         'items',
@@ -89,8 +89,9 @@ export class ProductService {
         'short_description as shortDescription',
         'description',
         'category',
-        '"productId"',
         'avg as rating',
+        'link as image',
+        'price',
       ])
       .leftJoin(
         (qb) =>
@@ -103,12 +104,17 @@ export class ProductService {
             .groupBy('product_review."productId"'),
         'review_tbl',
         '"review_tbl"."productId" = "product"."id"',
+      )
+      .leftJoin(
+        'product_images',
+        'product_images',
+        '"product_images"."productId" = "product"."id"  AND "product_images".pos = \'first\'',
       );
 
     const copy = this.productRepo
       .createQueryBuilder('product')
       .select([
-        'id',
+        '"product".id',
         'name',
         'description',
         'items',
@@ -117,8 +123,9 @@ export class ProductService {
         'short_description as shortDescription',
         'description',
         'category',
-        '"productId"',
         'avg as rating',
+        'link as image',
+        'price',
       ])
       .leftJoin(
         (qb) =>
@@ -131,31 +138,52 @@ export class ProductService {
             .groupBy('product_review."productId"'),
         'review_tbl',
         '"review_tbl"."productId" = "product"."id"',
+      )
+      .leftJoin(
+        'product_images',
+        'product_images',
+        '"product_images"."productId" = "product"."id"  AND "product_images".pos = \'first\'',
       );
 
     if (!!query.search) {
-      q.where('name LIKE :name');
-      copy.where('name LIKE :name');
+      q.andWhere('name LIKE :name');
+      copy.andWhere('name LIKE :name');
     }
 
     if (!!query.category) {
-      q.where('category = :category');
-      copy.where('category = :category');
+      q.andWhere('category = :category');
+      copy.andWhere('category = :category');
+    }
+
+    if (!!query.in) {
+      q.andWhere('"product".id IN (:...in)');
+      copy.andWhere('"product".id IN (:...in)');
+    }
+
+    if (!!query.notIn) {
+      q.andWhere('"product".id NOT IN (:...notIn)');
+      copy.andWhere('"product".id NOT IN (:...notIn)');
     }
 
     q.skip((query.page ?? 0) * (query.limit ?? 20)).take(query.limit ?? 20);
     if (!!query.sort)
       q.orderBy(
-        'name',
+        'created',
         (query?.sort as string).toUpperCase() as 'ASC' | 'DESC',
       );
+
     q.setParameters({
       name: query.search + '%',
       category: query.category,
+      in: query.in,
+      notIn: query.notIn,
     });
+
     copy.setParameters({
       name: query.search + '%',
       category: query.category,
+      in: query.in,
+      notIn: query.notIn,
     });
     return {
       data: await q.getRawMany(),
@@ -178,6 +206,49 @@ export class ProductService {
       .getRawOne();
 
     return { ...product, rating: v.review };
+  }
+
+  public async getRecommended() {
+    const product = await this.productRepo
+      .createQueryBuilder('product')
+      .select([
+        'id',
+        'name',
+        'description',
+        'items',
+        'created',
+        'modified',
+        'short_description as shortDescription',
+        'description',
+        'category',
+        '"productId"',
+        'avg as rating',
+        'price',
+      ])
+      .leftJoin(
+        (qb) =>
+          qb
+            .select([
+              'product_review."productId" as "productId"',
+              'AVG(rating)',
+            ])
+            .from(ProductReview, 'product_review')
+            .groupBy('product_review."productId"'),
+        'review_tbl',
+        '"review_tbl"."productId" = "product"."id"',
+      )
+      .orderBy('rating', 'DESC')
+      .getRawOne();
+
+    if (!product) throw new NotFoundException();
+
+    const images = await this.productImageRepo.find({
+      where: {
+        product: { id: product.id },
+      },
+    });
+
+    return { ...product, images };
   }
 
   public async getProductReview(id: string) {
@@ -218,7 +289,13 @@ export class ProductService {
     return;
   }
 
-  public async createProduct({ first, second, third, ...other }: ProductDto) {
+  public async createProduct({
+    first,
+    second,
+    third,
+    price,
+    ...other
+  }: ProductDto) {
     const product = await this.productRepo.findOne({
       where: {
         name: other.name,
@@ -228,7 +305,7 @@ export class ProductService {
     if (product) throw new ConflictException('Product already exist');
 
     let newProduct = new Product();
-    newProduct = { ...newProduct, ...other };
+    newProduct = { ...newProduct, ...other, price: price.toFixed(2) };
 
     const prod = await this.productRepo.save(newProduct);
 
@@ -257,7 +334,7 @@ export class ProductService {
 
   public async updateProduct(
     id: string,
-    { first, second, third, ...other }: UpdateProductDto,
+    { first, second, third, price, ...other }: UpdateProductDto,
   ) {
     let product = await this.productRepo.findOne({
       where: {
@@ -289,6 +366,9 @@ export class ProductService {
     }
 
     product = { ...product, ...other };
+
+    if (!!price) product.price = price.toFixed(2);
+
     await this.productRepo.save(product);
     return;
   }

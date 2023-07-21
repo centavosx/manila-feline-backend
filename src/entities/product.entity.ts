@@ -24,6 +24,9 @@ export class Product {
   @Column({ nullable: false })
   description: string;
 
+  @Column({ nullable: false, default: '0.00' })
+  price: string;
+
   @Column({ nullable: false })
   category: string;
 

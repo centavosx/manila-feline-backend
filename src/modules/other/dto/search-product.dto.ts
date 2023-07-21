@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsString, IsOptional, IsInt } from 'class-validator';
+import { IsString, IsOptional, IsInt, IsArray } from 'class-validator';
 import { FindOptionsOrderValue } from 'typeorm';
 
 const isInteger = (value: any): boolean => /^\+?(0|[1-9]\d*)$/.test(value);
@@ -35,4 +35,14 @@ export class SearchProductDto {
   @IsOptional()
   @IsString()
   category?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsArray()
+  in?: string[];
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsArray()
+  notIn?: string[];
 }
