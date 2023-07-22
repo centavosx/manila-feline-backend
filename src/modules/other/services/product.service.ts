@@ -155,9 +155,9 @@ export class ProductService {
       copy.andWhere('category = :category');
     }
 
-    if (!!query.in) {
-      q.andWhere('"product".id IN (:...in)');
-      copy.andWhere('"product".id IN (:...in)');
+    if (!!query.inArr) {
+      q.andWhere('"product".id IN (:...inArr)');
+      copy.andWhere('"product".id IN (:...inArr)');
     }
 
     if (!!query.notIn) {
@@ -175,14 +175,14 @@ export class ProductService {
     q.setParameters({
       name: query.search + '%',
       category: query.category,
-      in: query.in,
+      inArr: query.inArr,
       notIn: query.notIn,
     });
 
     copy.setParameters({
       name: query.search + '%',
       category: query.category,
-      in: query.in,
+      inArr: query.inArr,
       notIn: query.notIn,
     });
     return {

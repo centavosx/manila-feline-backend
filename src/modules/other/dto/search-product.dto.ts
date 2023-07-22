@@ -39,7 +39,7 @@ export class SearchProductDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsArray()
-  in?: string[];
+  inArr?: string[];
 
   @ApiPropertyOptional()
   @IsOptional()
