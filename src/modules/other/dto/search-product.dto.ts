@@ -33,8 +33,8 @@ export class SearchProductDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
-  category?: string;
+  @IsArray()
+  category?: string[];
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -45,4 +45,9 @@ export class SearchProductDto {
   @IsOptional()
   @IsArray()
   notIn?: string[];
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsArray()
+  range?: string[];
 }

@@ -151,8 +151,8 @@ export class ProductService {
     }
 
     if (!!query.category) {
-      q.andWhere('category = :category');
-      copy.andWhere('category = :category');
+      q.andWhere('category IN (:...category)');
+      copy.andWhere('category IN (:...category)');
     }
 
     if (!!query.inArr) {
@@ -163,6 +163,21 @@ export class ProductService {
     if (!!query.notIn) {
       q.andWhere('"product".id NOT IN (:...notIn)');
       copy.andWhere('"product".id NOT IN (:...notIn)');
+    }
+
+    if (!!query.range) {
+      q.andWhere(`TO_NUMBER(
+        "product".price,
+        '999999999999999999999999.99') >= :minValue`);
+      q.andWhere(`TO_NUMBER(
+        "product".price,
+        '999999999999999999999999.99') <= :maxValue`);
+      copy.andWhere(`TO_NUMBER(
+        "product".price,
+        '999999999999999999999999.99') >= :minValue`);
+      copy.andWhere(`TO_NUMBER(
+        "product".price,
+        '999999999999999999999999.99') <= :maxValue`);
     }
 
     q.skip((query.page ?? 0) * (query.limit ?? 20)).take(query.limit ?? 20);
@@ -177,6 +192,9 @@ export class ProductService {
       category: query.category,
       inArr: query.inArr,
       notIn: query.notIn,
+      ...(!!query.range
+        ? { minValue: Number(query.range[0]), maxValue: Number(query.range[1]) }
+        : {}),
     });
 
     copy.setParameters({
@@ -184,6 +202,9 @@ export class ProductService {
       category: query.category,
       inArr: query.inArr,
       notIn: query.notIn,
+      ...(!!query.range
+        ? { minValue: Number(query.range[0]), maxValue: Number(query.range[1]) }
+        : {}),
     });
     return {
       data: await q.getRawMany(),
