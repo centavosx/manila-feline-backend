@@ -63,12 +63,13 @@ export class ProductController {
     return await this.productService.getProductReview(id);
   }
 
-  // @Roles(RoleTypes.ADMIN)
+  @Roles(RoleTypes.ADMIN)
   @Post()
   public async createProduct(@Body() data: ProductDto) {
     return await this.productService.createProduct(data);
   }
 
+  @Roles(RoleTypes.ADMIN)
   @Patch(Parameter.id())
   public async updateProduct(
     @Param('id') id: string,
