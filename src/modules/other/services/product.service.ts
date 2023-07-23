@@ -30,6 +30,7 @@ import {
 } from 'typeorm';
 
 import {
+  BuyDto,
   CreateAppointmentDto,
   CreateEmailDto,
   ProductDto,
@@ -392,5 +393,39 @@ export class ProductService {
 
     await this.productRepo.save(product);
     return;
+  }
+
+  public async buyProduct(user: User, { data, timeZone }: BuyDto) {
+    let total = 0;
+    const saved = await this.userTransaction.save(
+      data.map((v) => {
+        const trans = new UserTransaction();
+        trans.itemNumber = v.qty;
+        trans.user = user;
+        trans.product = { ...new Product(), id: v.id };
+        trans.price = v.price;
+        total += Number(v.price);
+        return trans;
+      }),
+    );
+
+    const paypal = new Paypal({
+      items: saved.map((v) => ({
+        name: 'buy',
+        sku: v.id,
+        price: v.price,
+        currency: 'PHP',
+        quantity: v.itemNumber,
+      })),
+      currency: 'PHP',
+      price: total.toFixed(2),
+      successUrl: process.env.API_URL + 'other/transactions/success',
+      cancelledUrl: process.env.API_URL + 'other/transactions/canceled',
+      description: 'buy',
+      state: timeZone,
+    });
+    const link = (await paypal.create().pay()).link;
+
+    return link;
   }
 }

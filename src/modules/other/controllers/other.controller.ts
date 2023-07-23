@@ -139,7 +139,7 @@ export class OtherController {
     @Query() { paymentId, PayerID }: PaypalDto,
   ) {
     await this.otherService.successTransaction(PayerID, paymentId, true);
-    return res.redirect(process.env.MAIN_URL);
+    return res.redirect(process.env.MAIN_URL + '?remove=true');
   }
 
   @Get('transactions/canceled')

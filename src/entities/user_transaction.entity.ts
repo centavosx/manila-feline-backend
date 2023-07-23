@@ -15,7 +15,7 @@ export class UserTransaction {
   id: string;
 
   @Column({ nullable: false })
-  price: number;
+  price: string;
 
   @Column({ nullable: false })
   itemNumber: number;

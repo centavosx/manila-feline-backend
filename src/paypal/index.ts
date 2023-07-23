@@ -22,6 +22,14 @@ type CreatePaypalType = {
   state?: string;
 };
 
+paypal.configure({
+  mode: 'sandbox',
+  client_id:
+    'AW5GlJR7bM7D9dEJDE-R_fr7Hp0v_JlQUdD12g3VnnjqsZY9fJZVA-isBe5pfZierVXJaUfvw-dHlwm0',
+  client_secret:
+    'ELySQFq1H7oHbfyacHkY7LTu0i6mCf01UMtORnGaLV-AOsYmP2PAj3pWK1ZrzinO-Z8ZUhdtd-dEzbs3',
+});
+
 export class Paypal {
   private json: paypal.Payment | undefined;
   private transactionConfig: CreatePaypalType;
@@ -29,13 +37,6 @@ export class Paypal {
   public link: string;
 
   constructor(config: CreatePaypalType) {
-    paypal.configure({
-      mode: 'sandbox',
-      client_id:
-        'AW5GlJR7bM7D9dEJDE-R_fr7Hp0v_JlQUdD12g3VnnjqsZY9fJZVA-isBe5pfZierVXJaUfvw-dHlwm0',
-      client_secret:
-        'ELySQFq1H7oHbfyacHkY7LTu0i6mCf01UMtORnGaLV-AOsYmP2PAj3pWK1ZrzinO-Z8ZUhdtd-dEzbs3',
-    });
     this.transactionConfig = config;
   }
 

@@ -19,6 +19,7 @@ import {
   ReviewProductDto,
   ProductDto,
   UpdateProductDto,
+  BuyDto,
 } from '../dto';
 import { OtherService } from '../services/other.service';
 import { Roles as RoleTypes } from '../../../enum';
@@ -86,5 +87,11 @@ export class ProductController {
     @Body() data: ReviewProductDto,
   ) {
     return await this.productService.reviewProduct(id, user, data);
+  }
+
+  @Roles(RoleTypes.USER)
+  @Post('buy')
+  public async buyProduct(@UserDecorator() user: User, @Body() data: BuyDto) {
+    return await this.productService.buyProduct(user, data);
   }
 }
