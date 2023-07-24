@@ -227,7 +227,7 @@ export class ProductService {
       .groupBy('product_review."productId"')
       .getRawOne();
 
-    return { ...product, rating: v.review };
+    return { ...product, rating: v?.review ?? 0 };
   }
 
   public async getRecommended() {
@@ -404,7 +404,7 @@ export class ProductService {
         trans.user = user;
         trans.product = { ...new Product(), id: v.id };
         trans.price = v.price;
-        total += Number(v.price);
+        total += Number(v.price) * v.qty;
         return trans;
       }),
     );

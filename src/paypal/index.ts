@@ -15,6 +15,7 @@ type CreatePaypalType = {
     price: string;
     quantity: number;
     currency: string;
+    description?: string;
   }[];
   price: string;
   currency: string;
