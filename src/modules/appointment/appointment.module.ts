@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { MailService } from 'src/mail/mail.service';
+import { MailService } from '../../mail/mail.service';
 import { User, Services, Appointment } from '../../entities';
 import { AppointmentController } from './controllers';
 import { AppointmentService } from './services';
