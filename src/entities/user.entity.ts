@@ -11,9 +11,7 @@ import {
 import { Exclude } from 'class-transformer';
 
 import { Role } from './role.entity';
-import { Availability } from './availability.entity';
 import { Services } from './services.entity';
-import { Appointment } from './appointment.entity';
 import { UserTransaction } from './user_transaction.entity';
 import { UserPayment } from './user_payment.entity';
 import { ProductReview } from './product_review.entity';
@@ -65,20 +63,6 @@ export class User {
     inverseJoinColumn: { name: 'serviceId' },
   })
   services: Services[];
-
-  @OneToMany(() => Availability, (availability) => availability.user, {
-    eager: true,
-  })
-  @JoinTable({
-    name: 'availability',
-    joinColumn: { name: 'userId' },
-    inverseJoinColumn: { name: 'id' },
-  })
-  availability: Availability[];
-
-  @Exclude()
-  @OneToMany(() => Appointment, (appointment) => appointment.doctor)
-  appointment: Appointment[];
 
   @Exclude()
   @OneToMany(() => UserTransaction, (transaction) => transaction.user)

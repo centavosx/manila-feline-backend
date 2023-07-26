@@ -32,7 +32,7 @@ import { MailService } from '../../../mail/mail.service';
 import { Token, User } from '../../../decorators';
 import { User as Usertype } from '../../../entities';
 import { ForbiddenException } from '@nestjs/common/exceptions';
-import { UserInfoDto } from '../dto/update-user-info.dto';
+import { UpdateUserInfoDto, UserInfoDto } from '../dto/update-user-info.dto';
 
 @ApiTags('user')
 @Controller('user')
@@ -148,15 +148,6 @@ export class BaseController {
     return await this.baseService.removeRole(data, query);
   }
 
-  @Roles(RoleTypes.ADMIN)
-  @Put(Parameter.id() + '/availability')
-  public async updateAvailability(
-    @Param('id') id: string,
-    @Body() data: TimeSetterDto,
-  ) {
-    return await this.baseService.updateAvailability(id, data);
-  }
-
   @Post('/reset')
   public async resetToken(
     @User() user: Usertype | undefined,
@@ -170,5 +161,14 @@ export class BaseController {
   @Patch('/update-users')
   public async updateUsersData(@Body() users: UserInfoDto) {
     return await this.baseService.updateUsers(users);
+  }
+
+  @Roles(RoleTypes.USER)
+  @Patch()
+  public async updateUser(
+    @Body() users: UpdateUserInfoDto,
+    @User() user: Usertype,
+  ) {
+    return await this.baseService.updateUsers({ ...users, id: user.id });
   }
 }

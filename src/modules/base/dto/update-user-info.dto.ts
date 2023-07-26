@@ -27,3 +27,17 @@ export class UserInfoDto {
   @IsOptional()
   old: string;
 }
+
+export class UpdateUserInfoDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  name: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  password: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  old: string;
+}

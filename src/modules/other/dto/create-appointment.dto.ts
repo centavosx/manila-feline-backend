@@ -48,9 +48,8 @@ export class CreateAppointmentDto {
 
   @ApiProperty()
   @IsNotEmpty()
-  @IsNumber()
-  @Min(0)
-  age: number;
+  @IsString()
+  timeZone: string;
 
   @ApiProperty()
   @IsNotEmpty()

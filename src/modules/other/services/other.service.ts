@@ -8,11 +8,9 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   Appointment,
-  Availability,
   ContactUs,
   Product,
   Replies,
-  Role,
   Services,
   Status,
   User,
@@ -258,33 +256,17 @@ export class OtherService {
     const currDate = new Date(date);
     currDate.setHours(currDate.getHours() + timeBetween);
 
-    doctor.hasAm = !!doctor.availability.some((d) => {
-      const startDate = new Date(d.startDate);
-      const endDate = new Date(d.endDate);
-
-      startDate.setHours(startDate.getHours() + timeBetween);
-      endDate.setHours(endDate.getHours() + timeBetween);
-
-      return (
-        currDate.getDay() === startDate.getDay() &&
-        (startDate.getHours() < 12 || endDate.getHours() < 12)
-      );
-    });
-
-    doctor.hasPm = !!doctor.availability.some((d) => {
-      const startDate = new Date(d.startDate);
-      const endDate = new Date(d.endDate);
-
-      startDate.setHours(startDate.getHours() + timeBetween);
-      endDate.setHours(endDate.getHours() + timeBetween);
-
-      return (
-        currDate.getDay() === startDate.getDay() &&
-        (startDate.getHours() >= 12 || endDate.getHours() >= 12)
-      );
-    });
-
     return doctor;
+  }
+  private getAge(dateString: string) {
+    const today = new Date();
+    const birthDate = new Date(dateString);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
   }
 
   public async setAppointment(data: CreateAppointmentDto, timeZone: string) {
@@ -322,6 +304,7 @@ export class OtherService {
       newAppointment.startDate = startDate;
       newAppointment.endDate = endDate;
       newAppointment.birthDate = data.birthDate;
+      newAppointment.age = this.getAge(data.birthDate);
       newAppointment.petName = data.petName;
       newAppointment.gender = data.gender;
       newAppointment.refId = (

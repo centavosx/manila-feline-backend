@@ -8,7 +8,6 @@ import {
   User,
   Token,
   Services,
-  Availability,
   ContactUs,
   Appointment,
   UserPayment,
@@ -31,7 +30,7 @@ import { OtherService, ProductService, TransactionService } from './services';
       Role,
       Token,
       Services,
-      Availability,
+
       ContactUs,
       Replies,
       Appointment,

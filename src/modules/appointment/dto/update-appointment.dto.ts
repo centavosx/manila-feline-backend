@@ -1,17 +1,16 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsString, IsEnum, IsOptional, IsUUID, IsDate } from 'class-validator';
+import {
+  IsString,
+  IsEnum,
+  IsOptional,
+  IsUUID,
+  IsNumber,
+  IsNotEmpty,
+} from 'class-validator';
 import { AmOrPm, Status } from '../../../entities';
 
-const isInteger = (value: any): boolean => /^\+?(0|[1-9]\d*)$/.test(value);
-
 export class UpdateAppointmentDto {
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  @IsUUID()
-  doctorId?: string;
-
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
@@ -32,13 +31,11 @@ export class UpdateAppointmentDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsDate()
-  @Type(() => Date)
-  startDate?: Date;
+  @IsNumber()
+  date?: number;
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsDate()
-  @Type(() => Date)
-  endDate?: Date;
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  timeZone: string;
 }
