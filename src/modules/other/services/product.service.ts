@@ -1,58 +1,32 @@
 import {
   Injectable,
   NotFoundException,
-  BadRequestException,
   ConflictException,
-  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   Appointment,
-  ContactUs,
   Product,
   ProductImages,
   ProductReview,
-  Replies,
-  Role,
-  Services,
-  Status,
   User,
   UserPayment,
   UserTransaction,
 } from '../../../entities';
-import {
-  Brackets,
-  DataSource,
-  FindOptionsOrderValue,
-  ILike,
-  Repository,
-} from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 import {
   BuyDto,
-  CreateAppointmentDto,
-  CreateEmailDto,
   ProductDto,
-  ReplyMailDto,
   ReviewProductDto,
-  SearchDoctorDto,
   SearchProductDto,
   UpdateProductDto,
-  VerifyAppointmentDto,
 } from '../dto';
 
 import { MailService } from '../../../mail/mail.service';
-import { DeleteDto, ResponseDto, SearchUserDto } from '../../base/dto';
-import { Roles } from '../../../enum';
+import { DeleteDto, ResponseDto } from '../../base/dto';
 
-import {
-  addHours,
-  addMonths,
-  endOfMonth,
-  format,
-  startOfMonth,
-} from 'date-fns';
-import { Paypal, getPaymentInfo } from '../../../paypal';
+import { Paypal } from '../../../paypal';
 
 @Injectable()
 export class ProductService {
@@ -426,5 +400,8 @@ export class ProductService {
     const link = (await paypal.create().pay()).link;
 
     return link;
+  }
+  public async deleteProduct(data: DeleteDto) {
+    return await this.productRepo.delete(data.ids);
   }
 }

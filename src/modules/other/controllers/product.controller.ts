@@ -1,16 +1,4 @@
-import {
-  Controller,
-  Delete,
-  Get,
-  HttpCode,
-  Post,
-  Patch,
-  Query,
-  Body,
-  Put,
-  ForbiddenException,
-  Res,
-} from '@nestjs/common';
+import { Controller, Get, Post, Patch, Query, Body, Put } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Param } from '@nestjs/common/decorators';
 import { Roles } from '../../../decorators/roles.decorator';
@@ -25,9 +13,8 @@ import { OtherService } from '../services/other.service';
 import { Roles as RoleTypes } from '../../../enum';
 import { Parameter } from '../../../helpers';
 import { MailService } from '../../../mail/mail.service';
-import { Response } from 'express';
 
-import { SearchUserDto, DeleteDto } from '../../base/dto';
+import { DeleteDto } from '../../base/dto';
 import { ProductService } from '../services';
 import { User as UserDecorator } from '../../../decorators';
 import { User } from '../../../entities';
@@ -93,5 +80,11 @@ export class ProductController {
   @Post('buy')
   public async buyProduct(@UserDecorator() user: User, @Body() data: BuyDto) {
     return await this.productService.buyProduct(user, data);
+  }
+
+  @Roles(RoleTypes.ADMIN)
+  @Post('delete')
+  public async deleteProducts(@Body() data: DeleteDto) {
+    return await this.productService.deleteProduct(data);
   }
 }
