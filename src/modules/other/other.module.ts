@@ -8,12 +8,20 @@ import {
   User,
   Token,
   Services,
-  Availability,
   ContactUs,
   Appointment,
+  UserPayment,
+  UserTransaction,
+  Product,
+  ProductReview,
+  ProductImages,
 } from '../../entities';
-import { OtherController } from './controllers';
-import { OtherService } from './services';
+import {
+  OtherController,
+  ProductController,
+  TransactionController,
+} from './controllers';
+import { OtherService, ProductService, TransactionService } from './services';
 
 @Module({
   imports: [
@@ -22,13 +30,18 @@ import { OtherService } from './services';
       Role,
       Token,
       Services,
-      Availability,
+
       ContactUs,
       Replies,
       Appointment,
+      UserPayment,
+      UserTransaction,
+      Product,
+      ProductReview,
+      ProductImages,
     ]),
   ],
-  controllers: [OtherController],
-  providers: [OtherService, MailService],
+  controllers: [OtherController, ProductController, TransactionController],
+  providers: [OtherService, MailService, ProductService, TransactionService],
 })
 export class OtherModule {}

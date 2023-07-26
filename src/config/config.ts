@@ -8,7 +8,11 @@ import {
   Replies,
   Role,
   Services,
-  Availability,
+  UserTransaction,
+  UserPayment,
+  Product,
+  ProductReview,
+  ProductImages,
 } from '../entities';
 
 dotenv.config();
@@ -28,7 +32,11 @@ export const dataSourceOptions: DataSourceOptions = {
     Replies,
     Role,
     Services,
-    Availability,
+    UserTransaction,
+    UserPayment,
+    Product,
+    ProductReview,
+    ProductImages,
   ],
   migrations: ['dist/migrations/*.js'],
 };

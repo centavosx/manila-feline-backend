@@ -7,9 +7,11 @@ import {
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToOne,
 } from 'typeorm';
 import { Services } from './services.entity';
-import { User } from './user.entity';
+import { Exclude } from 'class-transformer';
+import { UserPayment } from './user_payment.entity';
 
 export enum Status {
   pending = 'Pending',
@@ -84,14 +86,9 @@ export class Appointment {
   @JoinColumn({ name: 'serviceId', referencedColumnName: 'id' })
   service: Services;
 
-  @ApiProperty({ type: User, nullable: true })
-  @ManyToOne(() => User, (user) => user.appointment, {
-    cascade: true,
-    onDelete: 'SET NULL',
-    nullable: true,
-  })
-  @JoinColumn({ name: 'doctorId' })
-  doctor?: User;
+  @Exclude()
+  @OneToOne(() => UserPayment, (payment) => payment.appointment)
+  payment: UserPayment | null;
 
   @CreateDateColumn()
   created: Date;

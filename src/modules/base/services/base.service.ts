@@ -5,7 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Availability, Role, Services, User } from '../../../entities';
+import { Role, Services, User } from '../../../entities';
 import { DataSource, Repository, Raw } from 'typeorm';
 
 import {
@@ -41,8 +41,7 @@ export class BaseService {
     private readonly roleRepository: Repository<Role>,
     @InjectRepository(Services)
     private readonly serviceRepository: Repository<Services>,
-    @InjectRepository(Availability)
-    private readonly availabilityRepository: Repository<Availability>,
+
     private readonly tokenService: TokenService,
     private readonly mailService: MailService,
   ) {}
@@ -247,7 +246,6 @@ export class BaseService {
         roles: undefined,
         services: undefined,
         availability: undefined,
-        appointment: undefined,
         created: undefined,
         modified: undefined,
       } as any,
@@ -327,12 +325,6 @@ export class BaseService {
     if (userToUpdate.length > 0) await this.userRepository.save(userToUpdate);
     if (userToDelete.length > 0) {
       await this.tokenService.unlistUserIds(userToDelete);
-      await this.availabilityRepository
-        .createQueryBuilder('availability')
-        .leftJoin('availability.user', 'user')
-        .where(`user.id IN (:...ids)`, { ids: userToDelete })
-        .delete()
-        .execute();
       await this.userRepository.delete(userToDelete);
     }
 
@@ -378,69 +370,6 @@ export class BaseService {
     throw new ConflictException('Service is not added in this account');
   }
 
-  public async updateAvailability(id: string, data: TimeSetterDto) {
-    const availability = await this.availabilityRepository.find({
-      where: {
-        user: {
-          id,
-        },
-      },
-      relations: ['user'],
-    });
-
-    await this.availabilityRepository.remove(availability);
-    const user = await this.userRepository.findOne({ where: { id } });
-    if (!user) throw new NotFoundException('User not found');
-
-    const availabilities: Availability[] = [];
-
-    for (const i in data.time) {
-      const index = parseInt(i);
-      for (const val of data.time[index]) {
-        const currDay = new Date();
-        const distance = (index + 7 - currDay.getDay()) % 7;
-        currDay.setDate(currDay.getDate() + distance);
-
-        const currDate =
-          pad(currDay.getMonth() + 1) +
-          '-' +
-          pad(currDay.getDate()) +
-          '-' +
-          currDay.getFullYear();
-
-        const startDate = new Date(val.startDate);
-
-        const endDate = new Date(val.endDate);
-
-        const startTime =
-          pad(startDate.getHours()) +
-          ':' +
-          pad(startDate.getMinutes()) +
-          ':' +
-          pad(startDate.getSeconds());
-
-        const endTime =
-          pad(endDate.getHours()) +
-          ':' +
-          pad(endDate.getMinutes()) +
-          ':' +
-          pad(endDate.getSeconds());
-
-        const firstDate = new Date(currDate + ' ' + startTime);
-        const secondDate = new Date(currDate + ' ' + endTime);
-
-        const newAvail = new Availability();
-
-        newAvail.startDate = firstDate;
-        newAvail.endDate = secondDate;
-        newAvail.user = user;
-        availabilities.push(newAvail);
-      }
-    }
-
-    return await this.availabilityRepository.save(availabilities);
-  }
-
   public async forgotPass(email: string, origin: string) {
     const user = await this.userRepository.findOne({ where: { email } });
     const token = await this.tokenService.generateResetToken(user);
@@ -474,7 +403,7 @@ export class BaseService {
     description,
     password,
     old,
-  }: UserInfoDto) {
+  }: Partial<UserInfoDto>) {
     const userData = await this.userRepository.findOne({
       where: {
         id,

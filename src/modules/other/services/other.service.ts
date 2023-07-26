@@ -2,16 +2,20 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ConflictException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   Appointment,
-  Availability,
   ContactUs,
+  Product,
   Replies,
-  Role,
   Services,
+  Status,
   User,
+  UserPayment,
+  UserTransaction,
 } from '../../../entities';
 import { Brackets, DataSource, ILike, Repository } from 'typeorm';
 
@@ -27,24 +31,35 @@ import { MailService } from '../../../mail/mail.service';
 import { DeleteDto, ResponseDto, SearchUserDto } from '../../base/dto';
 import { Roles } from '../../../enum';
 
+import {
+  addHours,
+  addMonths,
+  endOfMonth,
+  format,
+  startOfMonth,
+} from 'date-fns';
+import { Paypal, getPaymentInfo } from '../../../paypal';
+
 @Injectable()
 export class OtherService {
   constructor(
     private readonly dataSource: DataSource,
     @InjectRepository(User) private readonly userRepository: Repository<User>,
 
-    @InjectRepository(Role)
-    private readonly roleRepository: Repository<Role>,
     @InjectRepository(Services)
     private readonly serviceRepository: Repository<Services>,
-    @InjectRepository(Availability)
-    private readonly availabilityRepository: Repository<Availability>,
     @InjectRepository(ContactUs)
     private readonly contactRepository: Repository<ContactUs>,
     @InjectRepository(Replies)
     private readonly replyRepository: Repository<Replies>,
     @InjectRepository(Appointment)
     private readonly appointmentRepository: Repository<Appointment>,
+    @InjectRepository(UserPayment)
+    private readonly userPayment: Repository<UserPayment>,
+    @InjectRepository(UserTransaction)
+    private readonly userTransaction: Repository<UserTransaction>,
+    @InjectRepository(Product)
+    private readonly productRepo: Repository<Product>,
     private readonly mailService: MailService,
   ) {}
 
@@ -241,58 +256,20 @@ export class OtherService {
     const currDate = new Date(date);
     currDate.setHours(currDate.getHours() + timeBetween);
 
-    doctor.hasAm = !!doctor.availability.some((d) => {
-      const startDate = new Date(d.startDate);
-      const endDate = new Date(d.endDate);
-
-      startDate.setHours(startDate.getHours() + timeBetween);
-      endDate.setHours(endDate.getHours() + timeBetween);
-
-      return (
-        currDate.getDay() === startDate.getDay() &&
-        (startDate.getHours() < 12 || endDate.getHours() < 12)
-      );
-    });
-
-    doctor.hasPm = !!doctor.availability.some((d) => {
-      const startDate = new Date(d.startDate);
-      const endDate = new Date(d.endDate);
-
-      startDate.setHours(startDate.getHours() + timeBetween);
-      endDate.setHours(endDate.getHours() + timeBetween);
-
-      return (
-        currDate.getDay() === startDate.getDay() &&
-        (startDate.getHours() >= 12 || endDate.getHours() >= 12)
-      );
-    });
-
     return doctor;
   }
+  private getAge(dateString: string) {
+    const today = new Date();
+    const birthDate = new Date(dateString);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  }
 
-  public async setAppointment(id: string, data: CreateAppointmentDto) {
-    const doctor = this.userRepository
-      .createQueryBuilder('doctor')
-      .leftJoinAndSelect('doctor.availability', 'availability')
-      .leftJoinAndSelect('doctor.services', 'services')
-      .leftJoinAndSelect('doctor.roles', 'roles');
-
-    const mainWhereCondition = new Brackets((sub) => {
-      const query = `(doctor.id = :id AND roles.name = :role AND services.id = :serviceId) AND (TO_CHAR(availability.startDate + interval '8 hours', 'hh12:mi AM') LIKE :time OR TO_CHAR(availability.endDate + interval '8 hours', 'hh12:mi AM') LIKE :time)`;
-      return sub.where(query, {
-        id,
-        role: Roles.DOCTOR,
-        time: `%${data.time}%`,
-        serviceId: data.serviceId,
-      });
-    });
-
-    doctor.andWhere(mainWhereCondition);
-
-    const doctorData = await doctor.getOne();
-
-    if (!doctorData) throw new NotFoundException('Doctor not found');
-
+  public async setAppointment(data: CreateAppointmentDto, timeZone: string) {
     const service = await this.serviceRepository.findOne({
       where: { id: data.serviceId },
     });
@@ -301,41 +278,64 @@ export class OtherService {
 
     const newAppointment = new Appointment();
 
-    newAppointment.doctor = doctorData;
-    newAppointment.service = service;
-    newAppointment.email = data.email;
-    newAppointment.message = data.message;
-    newAppointment.name = data.name;
-    newAppointment.time = data.time;
-    newAppointment.date = new Date(data.date);
-    newAppointment.age = data.age ? Number(data.age) : null;
-    newAppointment.birthDate = data.birthDate;
-    newAppointment.petName = data.petName;
-    newAppointment.gender = data.gender;
-    newAppointment.refId = (
-      new Date().getTime().toString(36) + Math.random().toString(36).slice(8)
-    ).toUpperCase();
-    newAppointment.verification = Math.random()
-      .toString(36)
-      .slice(2)
-      .toUpperCase();
+    const startDate = new Date(data.date);
+    const endDate = addHours(startDate, 1);
 
-    const savedData = await this.appointmentRepository.save(newAppointment);
+    const start = this.beginingOfDay({
+      date: startOfMonth(startDate),
+      timeZone,
+    });
+    const end = addHours(start, 1);
 
-    await this.mailService.sendMail(
-      savedData.email,
-      'Please verify your appointment',
-      'verification',
-      {
-        name: savedData.name,
-        code: savedData.verification,
-      },
+    const dates = await this.getNotAvailabilityStatus(
+      format(start, 'yyyy-MM-dd HH:mm:ss'),
+      format(end, 'yyyy-MM-dd HH:mm:ss'),
+      Status.accepted,
+      timeZone,
     );
 
-    delete savedData.refId;
-    delete savedData.verification;
+    if (dates.length === 0) {
+      newAppointment.service = service;
+      newAppointment.email = data.email;
+      newAppointment.message = data.message;
+      newAppointment.name = data.name;
+      newAppointment.time = data.time;
+      newAppointment.date = startDate;
+      newAppointment.startDate = startDate;
+      newAppointment.endDate = endDate;
+      newAppointment.birthDate = data.birthDate;
+      newAppointment.age = this.getAge(data.birthDate);
+      newAppointment.petName = data.petName;
+      newAppointment.gender = data.gender;
+      newAppointment.refId = (
+        new Date().getTime().toString(36) + Math.random().toString(36).slice(8)
+      ).toUpperCase();
+      newAppointment.verification = Math.random()
+        .toString(36)
+        .slice(2)
+        .toUpperCase();
 
-    return savedData;
+      const savedData = await this.appointmentRepository.save(newAppointment);
+
+      try {
+        await this.mailService.sendMail(
+          savedData.email,
+          'Please verify your appointment',
+          'verification',
+          {
+            name: savedData.name,
+            code: savedData.verification,
+          },
+        );
+      } catch {}
+
+      delete savedData.refId;
+      delete savedData.verification;
+
+      return savedData;
+    }
+
+    throw new ConflictException('Date conflicted');
   }
 
   public async verifyAppointment(id: string, data: VerifyAppointmentDto) {
@@ -347,6 +347,7 @@ export class OtherService {
 
     if (appointment.verification === data.verification) {
       appointment.verification = null;
+      await this.appointmentRepository.save(appointment);
       await this.mailService.sendMail(
         appointment.email,
         'Your booking is now verified',
@@ -356,10 +357,136 @@ export class OtherService {
           code: appointment.refId,
         },
       );
-      return await this.appointmentRepository.save(appointment);
+
+      const paypal = new Paypal({
+        items: [
+          {
+            name: 'downpayment',
+            sku: appointment.id,
+            price: '100',
+            currency: 'PHP',
+            quantity: 1,
+          },
+        ],
+        currency: 'PHP',
+        price: '100',
+        successUrl: process.env.API_URL + 'other/transactions/success',
+        cancelledUrl: process.env.API_URL + 'other/transactions/canceled',
+        description: 'downpayment',
+        state: data.timeZone,
+      });
+
+      const link = (await paypal.create().pay()).link;
+
+      return link;
     }
 
     throw new BadRequestException('Invalid verification code');
+  }
+
+  public async successTransaction(
+    payerId: string,
+    paymentId: string,
+    isSuccess: boolean,
+  ) {
+    const { id, transactions } = await getPaymentInfo(payerId, paymentId);
+    const check = await this.userPayment.find({
+      where: {
+        paypalId: id,
+      },
+    });
+
+    if (check.length > 0) throw new ForbiddenException();
+
+    const descr = transactions[0].description.split(', State=');
+
+    const isDown = descr[0] === 'downpayment';
+
+    const payments: UserPayment[] = [];
+
+    let userT: User;
+
+    const productIds = [];
+
+    for (const i of transactions[0].item_list.items) {
+      const uPay = new UserPayment();
+      uPay.paypalId = id;
+      uPay.refId = transactions[0].related_resources[0].sale.id;
+      uPay.status = isSuccess ? 'PAID' : 'CANCELED';
+      if (i.name === 'downpayment' && isDown) {
+        uPay.appointmentId = i.sku;
+        const appointment = await this.appointmentRepository.findOne({
+          where: { id: i.sku },
+          relations: ['service'],
+        });
+
+        if (!!appointment) {
+          if (!userT) {
+            const user = await this.userRepository.findOne({
+              where: {
+                email: appointment.email,
+              },
+            });
+            if (!!user) userT = user;
+          }
+
+          uPay.user = userT;
+          appointment.status = Status.accepted;
+          const updated = await this.appointmentRepository.save(appointment);
+          const start = new Date(
+            new Date(updated.startDate).toLocaleString('en-US', {
+              timeZone: descr[1],
+            }),
+          );
+          const end = new Date(
+            new Date(updated.endDate).toLocaleString('en-US', {
+              timeZone: descr[1],
+            }),
+          );
+          await this.mailService.sendMail(
+            appointment.email,
+            'Your booking is now approved!',
+            'appointment',
+            {
+              refId: updated.refId,
+              name: updated.name,
+              status: updated.status,
+              time:
+                !!updated.startDate && !!updated.endDate
+                  ? 'Time: ' +
+                    format(start, 'EEEE, LLLL do yyyy  hh:mm a') +
+                    ' to ' +
+                    format(end, 'EEEE, LLLL do yyyy  hh:mm a')
+                  : '',
+
+              service: appointment.service.name,
+              price: i.price,
+            },
+          );
+        }
+      } else {
+        const transaction = await this.userTransaction.findOne({
+          where: { id: i.sku },
+          relations: !userT ? ['user', 'product'] : ['product'],
+        });
+
+        productIds.push(transaction.product.id);
+
+        if (!!transaction) {
+          if (!!transaction.user) userT = transaction.user;
+          transaction.product.items -= i.quantity;
+          await this.productRepo.save(transaction.product);
+        }
+
+        uPay.user = userT;
+        uPay.transactionId = i.sku;
+      }
+
+      payments.push(uPay);
+    }
+
+    await this.userPayment.save(payments);
+    return productIds;
   }
 
   public async refreshVerification(id: string) {
@@ -390,5 +517,86 @@ export class OtherService {
     delete savedData.verification;
 
     return savedData;
+  }
+
+  private beginingOfDay(options: { date: Date; timeZone: string }) {
+    const { date = new Date(), timeZone } = options;
+    const parts = Intl.DateTimeFormat('en-US', {
+      timeZone,
+      hourCycle: 'h23',
+      hour: 'numeric',
+      minute: 'numeric',
+      second: 'numeric',
+    }).formatToParts(date);
+    const hour = parseInt(parts.find((i) => i.type === 'hour').value);
+    const minute = parseInt(parts.find((i) => i.type === 'minute').value);
+    const second = parseInt(parts.find((i) => i.type === 'second').value);
+    return new Date(
+      1000 *
+        Math.floor(
+          (date.getTime() - hour * 3600000 - minute * 60000 - second * 1000) /
+            1000,
+        ),
+    );
+  }
+
+  private getStartAndEnd(timeZone: string, month: number, year: number) {
+    const date = new Date();
+    date.setMonth(month);
+    date.setFullYear(year);
+    const start = this.beginingOfDay({ date: startOfMonth(date), timeZone });
+    const end = addMonths(start, 1);
+
+    return {
+      startAt: format(start, 'yyyy-MM-dd HH:mm:ss'),
+      endAt: format(end, 'yyyy-MM-dd HH:mm:ss'),
+    };
+  }
+
+  private async getNotAvailabilityStatus(
+    startAt: string,
+    endAt: string,
+    status: string,
+    timeZone: string,
+  ): Promise<
+    {
+      date: string;
+    }[]
+  > {
+    return await this.appointmentRepository
+      .createQueryBuilder('appointment')
+      .select(
+        "TO_CHAR(timezone(:timeZone, appointment.startDate), 'yyyy-mm-dd hh24') as date",
+      )
+      .distinct(true)
+      .where(
+        `appointment.startDate >= timezone(current_setting('TIMEZONE'), :startAt) AND appointment.endDate <= timezone(current_setting('TIMEZONE'), :endAt) 
+          AND status = :status AND (appointment.startDate IS NOT NULL OR appointment.endDate IS NOT NULL) AND appointment.verification IS NULL`,
+      )
+      .groupBy('appointment.startDate')
+      .setParameters({
+        status,
+        timeZone,
+        startAt,
+        endAt,
+      })
+      .getRawMany();
+  }
+
+  public async getUnAvailableDates(
+    timeZone: string,
+    month: number,
+    year: number,
+  ) {
+    const { startAt, endAt } = this.getStartAndEnd(timeZone, month, year);
+
+    const dates = await this.getNotAvailabilityStatus(
+      startAt,
+      endAt,
+      Status.accepted,
+      timeZone,
+    );
+
+    return dates;
   }
 }

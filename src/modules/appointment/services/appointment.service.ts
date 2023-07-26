@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Appointment, Services, Status, User } from '../../../entities';
 import {
@@ -17,7 +21,7 @@ import { MailService } from '../../../mail/mail.service';
 import { ResponseDto } from '../../base/dto';
 import { Roles } from '../../../enum';
 import { CreateAppointmentDto } from 'src/modules/other/dto';
-import { format } from 'date-fns';
+import { addHours, format, startOfMonth } from 'date-fns';
 
 @Injectable()
 export class AppointmentService {
@@ -71,7 +75,7 @@ export class AppointmentService {
       },
       skip: (data.page ?? 0) * (data.limit ?? 20),
       take: data.limit ?? 20,
-      relations: ['service', 'doctor'],
+      relations: ['service'],
     });
 
     const total = await this.appointmentRepository.count({
@@ -94,7 +98,7 @@ export class AppointmentService {
       },
       skip: (data.page ?? 0) * (data.limit ?? 20),
       take: data.limit ?? 20,
-      relations: ['service', 'doctor'],
+      relations: ['service'],
     });
 
     return {
@@ -108,41 +112,13 @@ export class AppointmentService {
       where: {
         id,
       },
-      relations: ['service', 'doctor'],
+      relations: ['service'],
     });
-
-    const timeBetween = 8;
 
     if (!appointment) {
       throw new NotFoundException('Appointment not found');
     }
-    appointment.doctor = !!appointment.doctor
-      ? await this.userRepository.findOne({
-          where: { id: appointment.doctor?.id },
-          relations: ['services', 'availability'],
-        })
-      : null;
-    if (!!appointment.doctor) {
-      appointment.doctor.hasAm = !!appointment.doctor.availability.some((d) => {
-        const startDate = new Date(d.startDate);
-        const endDate = new Date(d.endDate);
 
-        startDate.setHours(startDate.getHours() + timeBetween);
-        endDate.setHours(endDate.getHours() + timeBetween);
-
-        return startDate.getHours() < 12 || endDate.getHours() < 12;
-      });
-
-      appointment.doctor.hasPm = !!appointment.doctor.availability.some((d) => {
-        const startDate = new Date(d.startDate);
-        const endDate = new Date(d.endDate);
-
-        startDate.setHours(startDate.getHours() + timeBetween);
-        endDate.setHours(endDate.getHours() + timeBetween);
-
-        return startDate.getHours() >= 12 || endDate.getHours() >= 12;
-      });
-    }
     return appointment;
   }
 
@@ -156,32 +132,65 @@ export class AppointmentService {
     return await this.appointmentRepository.remove(appointment);
   }
 
+  private async getNotAvailabilityStatus(
+    startAt: string,
+    endAt: string,
+    status: string,
+    timeZone: string,
+  ): Promise<
+    {
+      date: string;
+    }[]
+  > {
+    return await this.appointmentRepository
+      .createQueryBuilder('appointment')
+      .select(
+        "TO_CHAR(timezone(:timeZone, appointment.startDate), 'yyyy-mm-dd hh24') as date",
+      )
+      .distinct(true)
+      .where(
+        `appointment.startDate >= timezone(current_setting('TIMEZONE'), :startAt) AND appointment.endDate <= timezone(current_setting('TIMEZONE'), :endAt) 
+          AND status = :status AND (appointment.startDate IS NOT NULL OR appointment.endDate IS NOT NULL) AND appointment.verification IS NULL`,
+      )
+      .groupBy('appointment.startDate')
+      .setParameters({
+        status,
+        timeZone,
+        startAt,
+        endAt,
+      })
+      .getRawMany();
+  }
+
+  private beginingOfDay(options: { date: Date; timeZone: string }) {
+    const { date = new Date(), timeZone } = options;
+    const parts = Intl.DateTimeFormat('en-US', {
+      timeZone,
+      hourCycle: 'h23',
+      hour: 'numeric',
+      minute: 'numeric',
+      second: 'numeric',
+    }).formatToParts(date);
+    const hour = parseInt(parts.find((i) => i.type === 'hour').value);
+    const minute = parseInt(parts.find((i) => i.type === 'minute').value);
+    const second = parseInt(parts.find((i) => i.type === 'second').value);
+    return new Date(
+      1000 *
+        Math.floor(
+          (date.getTime() - hour * 3600000 - minute * 60000 - second * 1000) /
+            1000,
+        ),
+    );
+  }
+
   public async updateAppointment(id: string, data: UpdateAppointmentDto) {
     const appointment = await this.appointmentRepository.findOne({
       where: { id },
-      relations: ['doctor'],
     });
 
     if (!appointment) throw new NotFoundException('Appointment not found');
 
-    let service: Services | undefined, doctor: User | undefined;
-    if (!!data.doctorId) {
-      doctor = await this.userRepository.findOne({
-        where: {
-          id: data.doctorId,
-          roles: {
-            name: Roles.DOCTOR,
-          },
-        },
-        relations: ['roles', 'services', 'availability'],
-      });
-
-      if (!doctor) throw new NotFoundException('Doctor not found');
-    }
-
-    if (!doctor && !!data.serviceId) {
-      throw new NotFoundException('Service not found');
-    }
+    let service: Services | undefined;
 
     if (!!data.serviceId) {
       service = await this.serviceRepository.findOne({
@@ -189,16 +198,35 @@ export class AppointmentService {
           id: data.serviceId,
         },
       });
+      if (!service) throw new NotFoundException();
+    }
+
+    if (!!data.date) {
+      const startDate = new Date(data.date);
+      const endDate = addHours(startDate, 1);
+
+      const start = this.beginingOfDay({
+        date: startOfMonth(startDate),
+        timeZone: data.timeZone,
+      });
+      const end = addHours(start, 1);
+
+      const dates = await this.getNotAvailabilityStatus(
+        format(start, 'yyyy-MM-dd HH:mm:ss'),
+        format(end, 'yyyy-MM-dd HH:mm:ss'),
+        Status.accepted,
+        data.timeZone,
+      );
+      if (dates.length === 0) {
+        appointment.date = startDate;
+        appointment.startDate = startDate;
+        appointment.endDate = endDate;
+      } else {
+        throw new BadRequestException('Date and time not available');
+      }
     }
 
     appointment.service = service ?? appointment.service;
-    appointment.doctor = doctor ?? appointment.doctor;
-    appointment.startDate = !!data.startDate
-      ? new Date(data.startDate)
-      : appointment.startDate;
-    appointment.endDate = !!data.endDate
-      ? new Date(data.endDate)
-      : appointment.endDate;
     appointment.time = data.time;
     appointment.status = data.status;
 
@@ -224,15 +252,23 @@ export class AppointmentService {
                 ' to ' +
                 format(end, 'EEEE, LLLL do yyyy  hh:mm a')
               : '',
-          doctor: !!appointment.doctor
-            ? 'Doctor: Dr ' + appointment.doctor.name
-            : '',
           service: updated.service.name,
         },
       );
     } finally {
       return updated;
     }
+  }
+
+  private getAge(dateString: string) {
+    const today = new Date();
+    const birthDate = new Date(dateString);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
   }
 
   public async newAppointment(data: CreateAppointmentDto) {
@@ -243,13 +279,35 @@ export class AppointmentService {
 
     if (!service) throw new NotFoundException('Service not found');
 
-    appointment.date = data.date;
+    const startDate = new Date(data.date);
+    const endDate = addHours(startDate, 1);
+
+    const start = this.beginingOfDay({
+      date: startOfMonth(startDate),
+      timeZone: data.timeZone,
+    });
+    const end = addHours(start, 1);
+
+    const dates = await this.getNotAvailabilityStatus(
+      format(start, 'yyyy-MM-dd HH:mm:ss'),
+      format(end, 'yyyy-MM-dd HH:mm:ss'),
+      Status.accepted,
+      data.timeZone,
+    );
+    if (dates.length === 0) {
+      appointment.date = startDate;
+      appointment.startDate = startDate;
+      appointment.endDate = endDate;
+    } else {
+      throw new BadRequestException('Date and time not available');
+    }
+
     appointment.status = Status.pending;
     appointment.service = service;
     appointment.email = data.email;
     appointment.name = data.name;
     appointment.time = data.time;
-    appointment.age = data.age ? Number(data.age) : null;
+    appointment.age = this.getAge(data.birthDate);
     appointment.birthDate = data.birthDate;
     appointment.petName = data.petName;
     appointment.gender = data.gender;
