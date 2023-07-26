@@ -29,18 +29,9 @@ import {
 } from '../dto';
 
 import { MailService } from '../../../mail/mail.service';
-import { DeleteDto, ResponseDto, SearchUserDto } from '../../base/dto';
-import { Roles } from '../../../enum';
+import { ResponseDto } from '../../base/dto';
 
-import {
-  addHours,
-  addMonths,
-  endOfMonth,
-  format,
-  startOfMonth,
-} from 'date-fns';
-import { Paypal, getPaymentInfo } from '../../../paypal';
-import { SearchPaymentDto } from 'src/modules/base/dto/search-payments.dto';
+import { SearchPaymentDto } from '../../base/dto/search-payments.dto';
 
 @Injectable()
 export class TransactionService {

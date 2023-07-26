@@ -19,8 +19,7 @@ import { SearchAppointmentDto, UpdateAppointmentDto } from '../dto';
 
 import { MailService } from '../../../mail/mail.service';
 import { ResponseDto } from '../../base/dto';
-import { Roles } from '../../../enum';
-import { CreateAppointmentDto } from 'src/modules/other/dto';
+import { CreateAppointmentDto } from '../../../modules/other/dto';
 import { addHours, format, startOfMonth } from 'date-fns';
 
 @Injectable()
