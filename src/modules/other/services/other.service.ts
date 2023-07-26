@@ -423,6 +423,8 @@ export class OtherService {
 
     let userT: User;
 
+    const productIds = [];
+
     for (const i of transactions[0].item_list.items) {
       const uPay = new UserPayment();
       uPay.paypalId = id;
@@ -484,6 +486,9 @@ export class OtherService {
           where: { id: i.sku },
           relations: !userT ? ['user', 'product'] : ['product'],
         });
+
+        productIds.push(transaction.product.id);
+
         if (!!transaction) {
           if (!!transaction.user) userT = transaction.user;
           transaction.product.items -= i.quantity;
@@ -498,6 +503,7 @@ export class OtherService {
     }
 
     await this.userPayment.save(payments);
+    return productIds;
   }
 
   public async refreshVerification(id: string) {

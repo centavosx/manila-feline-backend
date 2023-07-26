@@ -53,4 +53,10 @@ export class TransactionController {
       user.roles.some((v) => v.name === RoleTypes.ADMIN) ? data.id : user.id,
     );
   }
+
+  @Roles(RoleTypes.USER, RoleTypes.ADMIN)
+  @Get(':id')
+  public async getOne(@Param('id') id: string) {
+    return await this.otherService.getTransaction(id);
+  }
 }

@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsString, IsOptional, IsInt } from 'class-validator';
+import { IsString, IsOptional, IsInt, Min, Max } from 'class-validator';
 
 const isInteger = (value: any): boolean => /^\+?(0|[1-9]\d*)$/.test(value);
 const toNumber = (value: any): number => {
@@ -34,4 +34,12 @@ export class SearchPaymentDto {
   @IsOptional()
   @IsString()
   sort?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Transform(toNumber)
+  @IsInt()
+  @Min(0)
+  @Max(1)
+  isBooking?: number;
 }

@@ -83,6 +83,21 @@ export class TransactionService {
       copy.andWhere('user_payment."userId" = :id');
     }
 
+    if (!!query.search) {
+      q.andWhere('user_payment."refId" = :refId');
+      copy.andWhere('user_payment."refId" = :refId');
+    }
+
+    if (!isNaN(query.isBooking)) {
+      if (query.isBooking == 0) {
+        q.andWhere('user_payment."transactionId" IS NOT NULL');
+        copy.andWhere('user_payment."transactionId" IS NOT NULL');
+      } else {
+        q.andWhere('user_payment."appointmentId" IS NOT NULL');
+        copy.andWhere('user_payment."appointmentId" IS NOT NULL');
+      }
+    }
+
     q.andWhere('user_payment."userId" IS NOT NULL');
     copy.andWhere('user_payment."userId" IS NOT NULL');
 
@@ -99,15 +114,26 @@ export class TransactionService {
 
     q.setParameters({
       id,
+      refId: query.search,
     });
 
     copy.setParameters({
       id,
+      refId: query.search,
     });
 
     return {
       data: await q.getRawMany(),
       total: (await copy.getRawMany()).length,
     };
+  }
+
+  public async getTransaction(refId: string) {
+    return await this.userPayment.find({
+      where: {
+        refId,
+      },
+      relations: ['transaction', 'user', 'appointment', 'transaction.product'],
+    });
   }
 }
