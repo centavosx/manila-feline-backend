@@ -12,6 +12,7 @@ import {
   Min,
 } from 'class-validator';
 import { AmOrPm, Gender } from '../../../entities';
+import { Optional } from '@nestjs/common';
 
 export class CreateAppointmentDto {
   @ApiProperty()
@@ -46,8 +47,8 @@ export class CreateAppointmentDto {
   @IsString()
   birthDate: string;
 
-  @ApiProperty()
-  @IsNotEmpty()
+  @ApiPropertyOptional()
+  @Optional()
   @IsString()
   timeZone: string;
 
