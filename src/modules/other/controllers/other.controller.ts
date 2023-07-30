@@ -99,11 +99,10 @@ export class OtherController {
   @Roles(RoleTypes.USER)
   @Post('/set-an-appoinment')
   public async setAppointment(
-    @Query() query: TimezoneDto,
     @Body()
     data: CreateAppointmentDto,
   ) {
-    return await this.otherService.setAppointment(data, query.timeZone);
+    return await this.otherService.setAppointment(data, data.timeZone);
   }
 
   @Roles(RoleTypes.USER)
