@@ -190,6 +190,7 @@ export class ProductService {
     const product = await this.productRepo.findOne({
       where: { id },
       relations: ['images'],
+      withDeleted: true,
     });
     if (!product) throw new NotFoundException();
 
