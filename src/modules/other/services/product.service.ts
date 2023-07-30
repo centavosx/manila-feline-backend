@@ -401,7 +401,8 @@ export class ProductService {
 
     return link;
   }
+
   public async deleteProduct(data: DeleteDto) {
-    return await this.productRepo.delete(data.ids);
+    return await this.productRepo.softDelete(data.ids);
   }
 }

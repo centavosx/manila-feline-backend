@@ -6,6 +6,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  DeleteDateColumn,
 } from 'typeorm';
 import { ProductReview } from './product_review.entity';
 import { ProductImages } from './product_images.entity';
@@ -44,4 +45,7 @@ export class Product {
 
   @UpdateDateColumn()
   modified: Date;
+
+  @DeleteDateColumn()
+  deleted: Date;
 }
