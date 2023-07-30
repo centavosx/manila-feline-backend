@@ -190,6 +190,7 @@ export class ProductService {
     const product = await this.productRepo.findOne({
       where: { id },
       relations: ['images'],
+      withDeleted: true,
     });
     if (!product) throw new NotFoundException();
 
@@ -401,7 +402,8 @@ export class ProductService {
 
     return link;
   }
+
   public async deleteProduct(data: DeleteDto) {
-    return await this.productRepo.delete(data.ids);
+    return await this.productRepo.softDelete(data.ids);
   }
 }
