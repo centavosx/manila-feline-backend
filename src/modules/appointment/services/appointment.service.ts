@@ -4,7 +4,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Appointment, Services, Status, User } from '../../../entities';
+import {
+  Appointment,
+  Services,
+  Status,
+  User,
+  UserPayment,
+} from '../../../entities';
 import {
   DataSource,
   IsNull,
@@ -33,6 +39,8 @@ export class AppointmentService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(Services)
     private readonly serviceRepository: Repository<Services>,
+    @InjectRepository(UserPayment)
+    private readonly userPayment: Repository<UserPayment>,
   ) {}
 
   public async getAppointments(
@@ -128,6 +136,15 @@ export class AppointmentService {
           ? { id }
           : (id as string[])?.map((d) => ({ id: d })),
     });
+
+    const userPayments = await this.userPayment.find({
+      where:
+        typeof id === 'string'
+          ? { appointmentId: id }
+          : (id as string[])?.map((d) => ({ appointmentId: d })),
+    });
+
+    await this.userPayment.remove(userPayments);
     return await this.appointmentRepository.remove(appointment);
   }
 
