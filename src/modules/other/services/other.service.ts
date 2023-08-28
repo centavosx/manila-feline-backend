@@ -31,6 +31,8 @@ import { MailService } from '../../../mail/mail.service';
 import { DeleteDto, ResponseDto, SearchUserDto } from '../../base/dto';
 import { Roles } from '../../../enum';
 
+import moment from 'moment-timezone';
+
 import {
   addHours,
   addMonths,
@@ -563,10 +565,18 @@ export class OtherService {
       date: string;
     }[]
   > {
+    const date = new Date();
+    const date2 = new Date().toLocaleString('en-US', {
+      timeZone,
+    });
+
+    const diff = new Date(date2).getTime() - new Date(date).getTime();
+    const hoursDiff = Math.round(diff / (1000 * 60 * 60));
+
     return await this.appointmentRepository
       .createQueryBuilder('appointment')
       .select(
-        "TO_CHAR(timezone(:timeZone, appointment.startDate), 'yyyy-mm-dd hh24') as date",
+        `TO_CHAR(appointment.startDate + interval '${hoursDiff} hours', 'yyyy-mm-dd hh24') as date`,
       )
       .distinct(true)
       .where(
