@@ -31,8 +31,6 @@ import { MailService } from '../../../mail/mail.service';
 import { DeleteDto, ResponseDto, SearchUserDto } from '../../base/dto';
 import { Roles } from '../../../enum';
 
-import moment from 'moment-timezone';
-
 import {
   addHours,
   addMonths,
